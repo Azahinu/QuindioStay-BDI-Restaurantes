@@ -1,0 +1,10 @@
+# Compilados Java y temporales
+out/
+target/
+*.class
+*.log
+sources.txt
+~$*
+*.tmp
+.DS_Store
+Thumbs.db

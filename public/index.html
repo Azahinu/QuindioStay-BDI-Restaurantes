@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuindíoStay · Módulo Restaurantes (Java 21 + JDBC + OpenPDF)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --qs-green: #14532d; --qs-mid: #166534; --qs-soft: #f0fdf4; }
+    body { background: #f1f5f9; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .navbar-qs { background: linear-gradient(135deg, #0f172a 0%, var(--qs-green) 100%); }
+    .nav-pills .nav-link.active { background-color: var(--qs-green); }
+    .card { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 6px rgba(15,23,42,.04); }
+    .table-sidebar-btn { text-align: left; font-size: .86rem; padding: .42rem .7rem; border-radius: 8px; border: 1px solid transparent; background: transparent; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+    .table-sidebar-btn:hover { background: #e2e8f0; }
+    .table-sidebar-btn.active { background: var(--qs-green); color: #fff; font-weight: 600; }
+    .sql-box { background: #0f172a; color: #a7f3d0; font-family: Consolas, monospace; font-size: .82rem; border-radius: 8px; padding: .75rem; white-space: pre-wrap; }
+    .badge-lvl { font-size: .72rem; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-qs px-3 py-2 shadow-sm">
+  <div class="container-fluid">
+    <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
+      <span>QuindíoStay · Restaurantes</span>
+      <span class="badge bg-warning text-dark" id="badgeMotor">Java 21 · JDBC</span>
+    </span>
+    <div class="d-flex align-items-center gap-2 text-white">
+      <div id="userInfoBox" class="small text-end me-2">
+        <div class="fw-semibold" id="lblUsuario">Sesión no iniciada</div>
+        <div class="opacity-75" id="lblRol">Inicie sesión para operar según rol</div>
+      </div>
+      <button class="btn btn-outline-light btn-sm" onclick="abrirModalLogin()">Cambiar / Login</button>
+      <button class="btn btn-outline-warning btn-sm d-none" id="btnLogout" onclick="cerrarSesion()">Salir</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-3 py-3">
+  <div id="alertGlobal" class="alert d-none alert-dismissible fade show" role="alert">
+    <span id="alertGlobalMsg"></span>
+    <button type="button" class="btn-close" onclick="ocultarAlerta()"></button>
+  </div>
+
+  <!-- Tabs principales -->
+  <ul class="nav nav-pills mb-3 bg-white p-2 rounded-3 shadow-sm gap-1 flex-wrap" id="mainTabs">
+    <li class="nav-item"><button class="nav-link active" data-tab="tabOperacion" onclick="cambiarTab('tabOperacion', this)">1. Reservas, Pagos y Pedidos</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="tabPerfilNotif" onclick="cambiarTab('tabPerfilNotif', this)">2. Perfil Cliente y Notificaciones</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="tabCrud" onclick="cambiarTab('tabCrud', this)">3. CRUD Completo (21 Tablas)</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="tabReportes" onclick="cambiarTab('tabReportes', this)">4. 10 Reportes (Vistas SQL + OpenPDF)</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="tabPlantillas" onclick="cambiarTab('tabPlantillas', this)">5. 4 Plantillas PDF (OpenPDF)</button></li>
+    <li class="nav-item"><button class="nav-link" data-tab="tabSql" onclick="cambiarTab('tabSql', this)">6. Consola SQL y Sustentación</button></li>
+  </ul>
+
+  <!-- TAB 1: OPERACIONES TRANSACCIONALES -->
+  <div id="tabOperacion" class="tab-pane-custom">
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card p-3 h-100">
+          <h5 class="fw-bold text-success mb-1">Nueva Reserva + Mesas Acopladas + Pago en Línea</h5>
+          <p class="text-muted small mb-3">Valida vigencia del Plan/Experiencia, acopla varias mesas vía <code>ReservaMesa</code> (p. ej. 14 personas), cobra en línea y programa recordatorio automático.</p>
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Cliente</label>
+              <select class="form-select form-select-sm" id="resCliente"></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Restaurante</label>
+              <select class="form-select form-select-sm" id="resPrestador" onchange="filtrarOpcionesPrestador()"></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Plan gastronómico (opcional)</label>
+              <select class="form-select form-select-sm" id="resPlan"></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Experiencia (opcional)</label>
+              <select class="form-select form-select-sm" id="resExperiencia"></select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Fecha servicio</label>
+              <input type="date" class="form-control form-control-sm" id="resFecha" value="2026-11-25">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Franja horaria</label>
+              <select class="form-select form-select-sm" id="resFranja">
+                <option value="desayuno">desayuno</option>
+                <option value="almuerzo" selected>almuerzo</option>
+                <option value="cena">cena</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Comensales</label>
+              <input type="number" class="form-control form-control-sm" id="resComensales" value="14" min="1" onchange="actualizarResumenMesas()">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold d-flex justify-content-between">
+                <span>Mesas físicas a acoplar (ReservaMesa)</span>
+                <span class="badge bg-info text-dark" id="lblCapacidadMesas">0 sillas seleccionadas</span>
+              </label>
+              <div id="resMesasChecks" class="border rounded p-2 bg-light d-flex flex-wrap gap-2" style="max-height:110px;overflow:auto;"></div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Canal</label>
+              <select class="form-select form-select-sm" id="resCanal">
+                <option value="web">web</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="telefono">telefono</option>
+                <option value="presencial">presencial</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Método de pago</label>
+              <select class="form-select form-select-sm" id="resMetodo">
+                <option value="PSE">PSE</option>
+                <option value="tarjeta">tarjeta</option>
+                <option value="transferencia">transferencia</option>
+                <option value="efectivo">efectivo</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Abono / Pago ($)</label>
+              <input type="number" class="form-control form-control-sm" id="resMontoPago" value="250000" min="0">
+            </div>
+          </div>
+          <button class="btn btn-success btn-sm mt-3 fw-semibold" onclick="crearReserva()">Registrar Reserva, Acoplar Mesas y Pagar</button>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card p-3 mb-3">
+          <h5 class="fw-bold text-primary mb-1">Nuevo Pedido (Precio Histórico Congelado)</h5>
+          <p class="text-muted small mb-2">Lee <code>Plato.precio_actual</code> desde la BD y lo congela en <code>DetallePedido.precio_unitario_historico</code>.</p>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Restaurante</label>
+              <select class="form-select form-select-sm" id="pedPrestador" onchange="filtrarPlatosPedido()"></select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Cliente</label>
+              <select class="form-select form-select-sm" id="pedCliente"></select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Modalidad</label>
+              <select class="form-select form-select-sm" id="pedTipo" onchange="toggleCamposPedido()">
+                <option value="en_mesa">en_mesa</option>
+                <option value="para_llevar">para_llevar</option>
+                <option value="domicilio">domicilio</option>
+              </select>
+            </div>
+            <div class="col-md-4" id="boxPedMesa">
+              <label class="form-label small fw-semibold">Mesa física</label>
+              <select class="form-select form-select-sm" id="pedMesa"></select>
+            </div>
+            <div class="col-md-4 d-none" id="boxPedDom">
+              <label class="form-label small fw-semibold">Domiciliario</label>
+              <select class="form-select form-select-sm" id="pedDomiciliario"></select>
+            </div>
+            <div class="col-md-8 d-none" id="boxPedDir">
+              <label class="form-label small fw-semibold">Dirección (hotel / finca / glamping)</label>
+              <input type="text" class="form-control form-control-sm" id="pedDireccion" placeholder="Ej: Finca La Palma km 4 vía Salento">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label small fw-semibold">Plato del restaurante</label>
+              <select class="form-select form-select-sm" id="pedPlato"></select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Cantidad</label>
+              <input type="number" class="form-control form-control-sm" id="pedCantidad" value="2" min="1">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm mt-2 fw-semibold" onclick="crearPedido()">Crear Pedido y Congelar Precio Histórico</button>
+        </div>
+
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0">Reservas Recientes y Cancelación (Regla 80%)</h6>
+            <span class="badge bg-secondary">&gt; 5 días = Reembolso 80%</span>
+          </div>
+          <div class="table-responsive" style="max-height:220px;overflow:auto;">
+            <table class="table table-sm table-hover small mb-0">
+              <thead class="table-light"><tr><th>ID</th><th>Cliente</th><th>Servicio</th><th>Pers.</th><th>Estado</th><th>Acción</th></tr></thead>
+              <tbody id="tbodyReservasRecientes"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: PERFIL CLIENTE Y NOTIFICACIONES -->
+  <div id="tabPerfilNotif" class="tab-pane-custom d-none">
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card p-3">
+          <h5 class="fw-bold text-success mb-2">Preferencias de PerfilCliente</h5>
+          <div class="row g-2">
+            <div class="col-md-12">
+              <label class="form-label small fw-semibold">Cliente con cuenta web</label>
+              <div class="input-group input-group-sm">
+                <input type="number" class="form-control" id="perfIdCliente" value="1" min="1">
+                <button class="btn btn-outline-success" onclick="cargarPerfil()">Cargar Perfil</button>
+              </div>
+            </div>
+            <div class="col-md-6"><label class="form-label small">Teléfono</label><input type="text" class="form-control form-control-sm" id="perfTelefono"></div>
+            <div class="col-md-6"><label class="form-label small">Ciudad origen</label><input type="text" class="form-control form-control-sm" id="perfCiudad"></div>
+            <div class="col-md-4"><label class="form-label small">Idioma</label>
+              <select class="form-select form-select-sm" id="perfIdioma"><option value="es">es</option><option value="en">en</option><option value="fr">fr</option></select>
+            </div>
+            <div class="col-md-4"><label class="form-label small">Canal preferido</label>
+              <select class="form-select form-select-sm" id="perfCanal"><option value="correo">correo</option><option value="SMS">SMS</option><option value="WhatsApp">WhatsApp</option></select>
+            </div>
+            <div class="col-md-4"><label class="form-label small">Anticipación (h)</label>
+              <select class="form-select form-select-sm" id="perfAnticipacion"><option value="24">24 h (1 día)</option><option value="72">72 h (3 días)</option><option value="168">168 h (7 días)</option></select>
+            </div>
+            <div class="col-12 form-check ms-2 mt-2">
+              <input class="form-check-input" type="checkbox" id="perfPromos">
+              <label class="form-check-label small" for="perfPromos">Acepta recibir promociones gastronómicas (<code>acepta_promociones</code>)</label>
+            </div>
+          </div>
+          <button class="btn btn-success btn-sm mt-3" onclick="guardarPerfil()">Guardar Preferencias en PerfilCliente</button>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <h5 class="fw-bold mb-0">Historial y Envío de Notificaciones</h5>
+            <div class="d-flex gap-1">
+              <input type="text" class="form-control form-control-sm" id="txtPromoMsg" placeholder="Promoción fin de semana en Salento..." style="width:240px;">
+              <button class="btn btn-outline-primary btn-sm" onclick="enviarPromocion()">Enviar Promo (Solo Aceptan)</button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="cargarNotificaciones()">Refrescar</button>
+            </div>
+          </div>
+          <div class="table-responsive" style="max-height:360px;overflow:auto;">
+            <table class="table table-sm table-striped small">
+              <thead class="table-dark"><tr><th>ID</th><th>Cliente</th><th>Tipo</th><th>Canal</th><th>F. Prog.</th><th>Estado</th><th>Mensaje</th></tr></thead>
+              <tbody id="tbodyNotificaciones"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: CRUD COMPLETO 21 TABLAS -->
+  <div id="tabCrud" class="tab-pane-custom d-none">
+    <div class="row g-3">
+      <div class="col-lg-3">
+        <div class="card p-2">
+          <div class="fw-bold small text-uppercase text-muted px-2 pt-1">Núcleo Común (11)</div>
+          <div id="listaTablasNucleo" class="mb-2"></div>
+          <div class="fw-bold small text-uppercase text-muted px-2 pt-1 border-top">Dominio 4: Restaurantes (10)</div>
+          <div id="listaTablasDominio"></div>
+        </div>
+      </div>
+      <div class="col-lg-9">
+        <div class="card p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <div>
+              <h5 class="fw-bold mb-0">Gestión CRUD: <span id="crudTituloTabla" class="text-success">Plato</span></h5>
+              <small class="text-muted" id="crudInfoFk"></small>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <div class="form-check form-switch small me-2">
+                <input class="form-check-input" type="checkbox" id="chkScopeLocal" onchange="cargarTablaCrud(tablaActual)">
+                <label class="form-check-label" for="chkScopeLocal">Solo mi restaurante</label>
+              </div>
+              <input type="text" class="form-control form-control-sm" id="crudBuscar" placeholder="Buscar..." oninput="filtrarDebounced()" style="width:180px;">
+              <button class="btn btn-outline-secondary btn-sm" onclick="limpiarFormularioCrud()">Nuevo / Limpiar</button>
+            </div>
+          </div>
+          <form id="crudForm" class="row g-2 border-top pt-2"></form>
+          <div id="boxPlatoEtiquetas" class="mt-2 p-2 bg-light rounded border d-none">
+            <div class="small fw-bold mb-1">Etiquetas Dietarias del Plato (<code>PlatoEtiqueta</code> · Prototipo Figura 3):</div>
+            <div id="checksEtiquetas" class="d-flex flex-wrap gap-3"></div>
+          </div>
+          <div class="mt-2 d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm" onclick="guardarCrud(false)">Insertar Nuevo (INSERT)</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="guardarCrud(true)">Actualizar Existente (UPDATE)</button>
+          </div>
+        </div>
+        <div class="card p-3">
+          <div class="table-responsive" style="max-height:380px;overflow:auto;">
+            <table class="table table-sm table-hover small" id="crudTable">
+              <thead class="table-dark" id="crudThead"></thead>
+              <tbody id="crudTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: 10 REPORTES + GRAFICOS + OPENPDF -->
+  <div id="tabReportes" class="tab-pane-custom d-none">
+    <div class="row g-3">
+      <div class="col-lg-4">
+        <div class="card p-2">
+          <h6 class="fw-bold px-2 pt-2">10 Reportes (Vistas SQL + ResultSet)</h6>
+          <div id="listaReportes" class="list-group list-group-flush"></div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+            <div>
+              <h5 class="fw-bold text-success mb-0" id="repTitulo">Seleccione un reporte</h5>
+              <small class="text-muted" id="repSub"></small>
+            </div>
+            <a id="btnDescargarPdf" class="btn btn-danger btn-sm fw-semibold" href="#" target="_blank">Descargar PDF (OpenPDF)</a>
+          </div>
+          <div id="repFiltros" class="row g-2 mb-2 align-items-end"></div>
+          <div class="sql-box mb-2" id="repSql"></div>
+          <div id="boxChart" class="mb-3 d-none" style="max-height:290px;"><canvas id="repChart"></canvas></div>
+          <div class="table-responsive" style="max-height:360px;overflow:auto;">
+            <table class="table table-sm table-striped small">
+              <thead class="table-dark" id="repThead"></thead>
+              <tbody id="repTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: PLANTILLAS OPENPDF -->
+  <div id="tabPlantillas" class="tab-pane-custom d-none">
+    <div class="row g-3">
+      <div class="col-md-6 col-lg-3">
+        <div class="card p-3 h-100">
+          <span class="badge bg-success mb-2 align-self-start">Plantilla 1</span>
+          <h6 class="fw-bold">Comprobante de Reserva</h6>
+          <p class="small text-muted">Incluye cliente, restaurante, plan/experiencia, mesas acopladas (<code>ReservaMesa</code>) y regla 80%.</p>
+          <label class="form-label small">ID Reserva (ej. 502 = 14 personas)</label>
+          <input type="number" class="form-control form-control-sm mb-2" id="plIdReserva" value="502">
+          <button class="btn btn-danger btn-sm mt-auto" onclick="descargarPlantilla('reserva', 'plIdReserva')">Generar PDF (OpenPDF)</button>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card p-3 h-100">
+          <span class="badge bg-primary mb-2 align-self-start">Plantilla 2</span>
+          <h6 class="fw-bold">Comprobante de Pago</h6>
+          <p class="small text-muted">Soporte de transacción bancaria, PSE o efectivo y estado de aprobación/reembolso.</p>
+          <label class="form-label small">ID Pago</label>
+          <input type="number" class="form-control form-control-sm mb-2" id="plIdPago" value="1">
+          <button class="btn btn-danger btn-sm mt-auto" onclick="descargarPlantilla('pago', 'plIdPago')">Generar PDF (OpenPDF)</button>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card p-3 h-100">
+          <span class="badge bg-warning text-dark mb-2 align-self-start">Plantilla 3</span>
+          <h6 class="fw-bold">Factura de Pedido</h6>
+          <p class="small text-muted">Desglosa líneas con <code>precio_unitario_historico</code> congelado vs carta vigente.</p>
+          <label class="form-label small">ID Pedido (ej. 901)</label>
+          <input type="number" class="form-control form-control-sm mb-2" id="plIdPedido" value="901">
+          <button class="btn btn-danger btn-sm mt-auto" onclick="descargarPlantilla('factura', 'plIdPedido')">Generar PDF (OpenPDF)</button>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="card p-3 h-100">
+          <span class="badge bg-dark mb-2 align-self-start">Plantilla 4</span>
+          <h6 class="fw-bold">Autorización de Datos (Ley 1581)</h6>
+          <p class="small text-muted">Consentimiento de tratamiento de datos y autorización de promociones de <code>PerfilCliente</code>.</p>
+          <label class="form-label small">ID Cliente</label>
+          <input type="number" class="form-control form-control-sm mb-2" id="plIdCliente" value="1">
+          <button class="btn btn-danger btn-sm mt-auto" onclick="descargarPlantilla('autorizacion', 'plIdCliente')">Generar PDF (OpenPDF)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: CONSOLA SQL & SUSTENTACION -->
+  <div id="tabSql" class="tab-pane-custom d-none">
+    <div class="card p-3">
+      <h5 class="fw-bold text-success">Consola SQL (JDBC + ResultSet) y Defensas de Sustentación</h5>
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        <button class="btn btn-outline-success btn-sm" onclick="cargarPresetSql(1)">Defensa 1: Grupo 14 personas (vw_Defensa_GruposGrandes)</button>
+        <button class="btn btn-outline-success btn-sm" onclick="cargarPresetSql(2)">Defensa 2: Precio histórico Pedido 901 (vw_Defensa_PrecioHistorico)</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="cargarPresetSql(3)">Clase 18: vw_ReservaDetalle</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="cargarPresetSql(4)">Clase 18: vw_TotalPagadoCliente &gt; AVG()</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="cargarPresetSql(5)">Clase 18: vw_IngresosPrestador</button>
+      </div>
+      <textarea class="form-control font-monospace small mb-2" id="txtSqlLibre" rows="4">SELECT * FROM vw_Defensa_PrecioHistorico WHERE id_pedido = 901;</textarea>
+      <button class="btn btn-dark btn-sm mb-3" style="width:190px;" onclick="ejecutarSqlLibre()">Ejecutar SELECT (ResultSet)</button>
+      <div class="table-responsive" style="max-height:360px;overflow:auto;">
+        <table class="table table-sm table-striped small">
+          <thead class="table-dark" id="sqlThead"></thead>
+          <tbody id="sqlTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LOGIN + REGISTRO CLIENTE -->
+<div class="modal fade" id="modalLogin" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header navbar-qs text-white">
+        <h5 class="modal-title">QuindíoStay · Autenticación y Registro</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="nav nav-tabs mb-3">
+          <li class="nav-item"><button class="nav-link active" id="tabBtnLogin" onclick="toggleAuthPane(true)">Iniciar Sesión</button></li>
+          <li class="nav-item"><button class="nav-link" id="tabBtnReg" onclick="toggleAuthPane(false)">Crear Cuenta de Cliente</button></li>
+        </ul>
+        <div id="paneLogin">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Tipo de cuenta</label>
+              <select class="form-select form-select-sm" id="loginTipo">
+                <option value="interno">Personal / Admin (UsuarioSistema)</option>
+                <option value="cliente">Turista / Cliente (PerfilCliente)</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Usuario o correo</label>
+              <input type="text" class="form-control form-control-sm" id="loginUsuario" value="admin_quindio">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Contraseña</label>
+              <input type="password" class="form-control form-control-sm" id="loginPass" value="Quindio2026*">
+            </div>
+          </div>
+          <div class="mt-2 small text-muted">
+            Accesos rápidos demo:
+            <button class="btn btn-link btn-sm p-0 me-2" onclick="fillLogin('interno','admin_quindio','Quindio2026*')">Admin (admin_quindio)</button>
+            <button class="btn btn-link btn-sm p-0 me-2" onclick="fillLogin('interno','encargado_cocora','Quindio2026*')">Encargado Cocora</button>
+            <button class="btn btn-link btn-sm p-0 me-2" onclick="fillLogin('interno','operador_salento','Quindio2026*')">Operador Salento</button>
+            <button class="btn btn-link btn-sm p-0" onclick="fillLogin('cliente','valentina.arango1@correo.com','Cliente2026*')">Cliente (Valentina #1)</button>
+          </div>
+          <button class="btn btn-success btn-sm mt-3" onclick="iniciarSesion()">Entrar</button>
+        </div>
+
+        <div id="paneRegistro" class="d-none">
+          <div class="row g-2">
+            <div class="col-md-3"><label class="form-label small">Tipo doc</label><select class="form-select form-select-sm" id="regTipoDoc"><option>CC</option><option>CE</option><option>PA</option><option>TI</option></select></div>
+            <div class="col-md-3"><label class="form-label small">Número doc</label><input class="form-control form-control-sm" id="regNumDoc" placeholder="1094999888"></div>
+            <div class="col-md-3"><label class="form-label small">Nombres</label><input class="form-control form-control-sm" id="regNombres"></div>
+            <div class="col-md-3"><label class="form-label small">Apellidos</label><input class="form-control form-control-sm" id="regApellidos"></div>
+            <div class="col-md-4"><label class="form-label small">Correo</label><input type="email" class="form-control form-control-sm" id="regCorreo"></div>
+            <div class="col-md-4"><label class="form-label small">Teléfono</label><input class="form-control form-control-sm" id="regTelefono" value="3150001122"></div>
+            <div class="col-md-4"><label class="form-label small">Fecha nacimiento</label><input type="date" class="form-control form-control-sm" id="regNac" value="1999-04-12"></div>
+            <div class="col-md-4"><label class="form-label small">Ciudad origen</label><input class="form-control form-control-sm" id="regCiudad" value="Bogotá"></div>
+            <div class="col-md-4"><label class="form-label small">Contraseña</label><input type="password" class="form-control form-control-sm" id="regClave" value="Cliente2026*"></div>
+            <div class="col-md-4"><label class="form-label small">Canal avisos</label><select class="form-select form-select-sm" id="regCanal"><option value="correo">correo</option><option value="WhatsApp">WhatsApp</option><option value="SMS">SMS</option></select></div>
+          </div>
+          <button class="btn btn-primary btn-sm mt-3" onclick="registrarCliente()">Crear Cliente + PerfilCliente</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const TABLAS_NUCLEO = ['Municipio','TipoPrestador','Prestador','Rol','UsuarioSistema','Cliente','PerfilCliente','Plan','Reserva','Pago','Notificacion'];
+const TABLAS_DOMINIO = ['Mesa','ReservaMesa','CategoriaPlato','Plato','Etiqueta','PlatoEtiqueta','Experiencia','Domiciliario','Pedido','DetallePedido'];
+
+let catalogo = {};
+let tablaActual = 'Plato';
+let metaColumnas = [];
+let reporteActual = 'R-04';
+let chartInst = null;
+let filtroTimer = null;
+let modalLoginBs = null;
+
+function mostrarAlerta(msg, tipo='success') {
+  const box = document.getElementById('alertGlobal');
+  box.className = `alert alert-${tipo} alert-dismissible fade show`;
+  document.getElementById('alertGlobalMsg').textContent = msg;
+  box.classList.remove('d-none');
+}
+function ocultarAlerta() { document.getElementById('alertGlobal').classList.add('d-none'); }
+
+async function api(url, opts = {}) {
+  const r = await fetch(url, opts);
+  const data = await r.json();
+  if (!data.ok && data.error) throw new Error(data.error);
+  return data;
+}
+
+function cambiarTab(id, btn) {
+  document.querySelectorAll('.tab-pane-custom').forEach(el => el.classList.add('d-none'));
+  document.getElementById(id).classList.remove('d-none');
+  document.querySelectorAll('#mainTabs .nav-link').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (id === 'tabCrud') cargarTablaCrud(tablaActual);
+  if (id === 'tabReportes') cargarReporte(reporteActual);
+  if (id === 'tabPerfilNotif') { cargarPerfil(); cargarNotificaciones(); }
+}
+
+function abrirModalLogin() { modalLoginBs.show(); }
+function toggleAuthPane(esLogin) {
+  document.getElementById('paneLogin').classList.toggle('d-none', !esLogin);
+  document.getElementById('paneRegistro').classList.toggle('d-none', esLogin);
+  document.getElementById('tabBtnLogin').classList.toggle('active', esLogin);
+  document.getElementById('tabBtnReg').classList.toggle('active', !esLogin);
+}
+function fillLogin(tipo, usr, pass) {
+  document.getElementById('loginTipo').value = tipo;
+  document.getElementById('loginUsuario').value = usr;
+  document.getElementById('loginPass').value = pass;
+}
+
+async function iniciarSesion() {
+  try {
+    const body = {
+      tipoCuenta: document.getElementById('loginTipo').value,
+      usuario: document.getElementById('loginUsuario').value,
+      contrasena: document.getElementById('loginPass').value
+    };
+    const res = await api('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    modalLoginBs.hide();
+    mostrarAlerta(`Sesión iniciada: ${res.nombre} (${res.rol})`);
+    await refrescarSesion();
+    await cargarCatalogo();
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function cerrarSesion() {
+  await fetch('/api/logout', { method:'POST' });
+  await refrescarSesion();
+}
+
+async function registrarCliente() {
+  try {
+    const body = {
+      tipo_documento: document.getElementById('regTipoDoc').value,
+      numero_documento: document.getElementById('regNumDoc').value,
+      nombres: document.getElementById('regNombres').value,
+      apellidos: document.getElementById('regApellidos').value,
+      correo: document.getElementById('regCorreo').value,
+      telefono: document.getElementById('regTelefono').value,
+      fecha_nacimiento: document.getElementById('regNac').value,
+      ciudad_origen: document.getElementById('regCiudad').value,
+      contrasena: document.getElementById('regClave').value,
+      canal_preferido: document.getElementById('regCanal').value,
+      anticipacion_recordatorio: 24,
+      acepta_promociones: 1
+    };
+    const res = await api('/api/clientes/registro', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    mostrarAlerta(res.mensaje);
+    toggleAuthPane(true);
+    fillLogin('cliente', body.correo, body.contrasena);
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function refrescarSesion() {
+  const s = await fetch('/api/sesion').then(r => r.json());
+  document.getElementById('badgeMotor').textContent = `Java 21 · ${(s.motor || 'sqlite').toUpperCase()}`;
+  if (s.autenticado) {
+    document.getElementById('lblUsuario').textContent = `${s.nombre} · ${s.rol.toUpperCase()}`;
+    document.getElementById('lblRol').textContent = s.restaurante || '';
+    document.getElementById('btnLogout').classList.remove('d-none');
+    if (s.idCliente) document.getElementById('perfIdCliente').value = s.idCliente;
+  } else {
+    document.getElementById('lblUsuario').textContent = 'Modo demostración abierta (Java + JDBC)';
+    document.getElementById('lblRol').textContent = 'Haga clic en Login para validar rol específico';
+    document.getElementById('btnLogout').classList.add('d-none');
+  }
+}
+
+async function cargarCatalogo() {
+  catalogo = await api('/api/catalogo');
+  const fillSel = (id, list, fnTxt, valKey, optNull) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = optNull ? `<option value="">${optNull}</option>` : '';
+    (list || []).forEach(it => {
+      const o = document.createElement('option');
+      o.value = it[valKey];
+      o.textContent = fnTxt(it);
+      sel.appendChild(o);
+    });
+  };
+  fillSel('resCliente', catalogo.clientes, c => `#${c.id_cliente} ${c.nombre}`, 'id_cliente');
+  fillSel('pedCliente', catalogo.clientes, c => `#${c.id_cliente} ${c.nombre}`, 'id_cliente', '(Mostrador)');
+  fillSel('resPrestador', catalogo.prestadores, p => `${p.nombre_comercial} (${p.municipio})`, 'id_prestador');
+  fillSel('pedPrestador', catalogo.prestadores, p => `${p.nombre_comercial}`, 'id_prestador');
+  filtrarOpcionesPrestador();
+  filtrarPlatosPedido();
+
+  const tb = document.getElementById('tbodyReservasRecientes');
+  tb.innerHTML = '';
+  (catalogo.reservasRecientes || []).forEach(r => {
+    const btnCanc = (r.estado !== 'cancelada' && r.estado !== 'completada')
+      ? `<button class="btn btn-outline-danger btn-sm py-0" onclick="cancelarReserva(${r.id_reserva})">Cancelar</button>` : '-';
+    tb.innerHTML += `<tr><td>${r.id_reserva}</td><td>${r.cliente}</td><td>${r.fecha_servicio} (${r.franja_horaria})</td><td>${r.numero_comensales}</td><td><span class="badge bg-secondary">${r.estado}</span></td><td>${btnCanc}</td></tr>`;
+  });
+}
+
+function filtrarOpcionesPrestador() {
+  const idP = Number(document.getElementById('resPrestador').value);
+  const planes = (catalogo.planes || []).filter(p => Number(p.id_prestador) === idP);
+  const exps = (catalogo.experiencias || []).filter(e => Number(e.id_prestador) === idP);
+  const mesas = (catalogo.mesas || []).filter(m => Number(m.id_prestador) === idP);
+
+  document.getElementById('resPlan').innerHTML = '<option value="">(Ninguno)</option>' +
+    planes.map(p => `<option value="${p.id_plan}">${p.nombre} ($${Number(p.precio).toLocaleString()}) [${p.fecha_inicio_vigencia}..${p.fecha_fin_vigencia}]</option>`).join('');
+  if (planes.length) document.getElementById('resPlan').value = planes[0].id_plan;
+
+  document.getElementById('resExperiencia').innerHTML = '<option value="">(Ninguna)</option>' +
+    exps.map(e => `<option value="${e.id_experiencia}">${e.nombre_experiencia} ($${Number(e.precio_persona).toLocaleString()}/p)</option>`).join('');
+
+  const box = document.getElementById('resMesasChecks');
+  box.innerHTML = mesas.map(m =>
+    `<label class="form-check form-check-inline small m-0">
+      <input type="checkbox" class="form-check-input chk-mesa" value="${m.id_mesa}" data-cap="${m.capacidad}" onchange="actualizarResumenMesas()">
+      <span>M#${m.numero_mesa} (${m.capacidad}p · ${m.zona})</span>
+    </label>`
+  ).join('');
+  actualizarResumenMesas();
+}
+
+function actualizarResumenMesas() {
+  const com = Number(document.getElementById('resComensales').value || 0);
+  let sum = 0;
+  document.querySelectorAll('.chk-mesa:checked').forEach(c => sum += Number(c.dataset.cap));
+  const lbl = document.getElementById('lblCapacidadMesas');
+  lbl.textContent = `${sum} sillas / ${com} comensales`;
+  lbl.className = sum >= com ? 'badge bg-success' : 'badge bg-warning text-dark';
+}
+
+function filtrarPlatosPedido() {
+  const idP = Number(document.getElementById('pedPrestador').value);
+  const platos = (catalogo.platos || []).filter(p => Number(p.id_prestador) === idP);
+  const mesas = (catalogo.mesas || []).filter(m => Number(m.id_prestador) === idP);
+  const doms = (catalogo.domiciliarios || []).filter(d => Number(d.id_prestador) === idP);
+  document.getElementById('pedPlato').innerHTML = platos.map(p => `<option value="${p.id_plato}">${p.nombre_plato} ($${Number(p.precio_actual).toLocaleString()})</option>`).join('');
+  document.getElementById('pedMesa').innerHTML = mesas.map(m => `<option value="${m.id_mesa}">Mesa #${m.numero_mesa} (${m.zona})</option>`).join('');
+  document.getElementById('pedDomiciliario').innerHTML = doms.map(d => `<option value="${d.id_domiciliario}">${d.nombre} (${d.tipo_vehiculo})</option>`).join('');
+}
+
+function toggleCamposPedido() {
+  const t = document.getElementById('pedTipo').value;
+  document.getElementById('boxPedMesa').classList.toggle('d-none', t !== 'en_mesa');
+  document.getElementById('boxPedDom').classList.toggle('d-none', t !== 'domicilio');
+  document.getElementById('boxPedDir').classList.toggle('d-none', t !== 'domicilio');
+}
+
+async function crearReserva() {
+  try {
+    const mesas = Array.from(document.querySelectorAll('.chk-mesa:checked')).map(c => Number(c.value));
+    const body = {
+      id_cliente: Number(document.getElementById('resCliente').value),
+      id_plan: document.getElementById('resPlan').value || null,
+      id_experiencia: document.getElementById('resExperiencia').value || null,
+      fecha_servicio: document.getElementById('resFecha').value,
+      franja_horaria: document.getElementById('resFranja').value,
+      numero_comensales: Number(document.getElementById('resComensales').value),
+      canal: document.getElementById('resCanal').value,
+      metodo_pago: document.getElementById('resMetodo').value,
+      monto_pago: Number(document.getElementById('resMontoPago').value),
+      id_mesas: mesas
+    };
+    const res = await api('/api/reservas/crear', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    mostrarAlerta(res.mensaje);
+    await cargarCatalogo();
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function cancelarReserva(id) {
+  try {
+    const res = await api('/api/reservas/cancelar', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id_reserva: id}) });
+    mostrarAlerta(res.mensaje, res.aplica_reembolso_80 ? 'warning' : 'info');
+    await cargarCatalogo();
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function crearPedido() {
+  try {
+    const body = {
+      id_prestador: Number(document.getElementById('pedPrestador').value),
+      id_cliente: document.getElementById('pedCliente').value || null,
+      tipo_pedido: document.getElementById('pedTipo').value,
+      id_mesa: document.getElementById('pedTipo').value === 'en_mesa' ? Number(document.getElementById('pedMesa').value) : null,
+      id_domiciliario: document.getElementById('pedTipo').value === 'domicilio' ? (document.getElementById('pedDomiciliario').value || null) : null,
+      direccion_entrega: document.getElementById('pedDireccion').value,
+      items: [{ id_plato: Number(document.getElementById('pedPlato').value), cantidad: Number(document.getElementById('pedCantidad').value) }]
+    };
+    const res = await api('/api/pedidos/crear', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    mostrarAlerta(res.mensaje);
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function cargarPerfil() {
+  try {
+    const id = document.getElementById('perfIdCliente').value || 1;
+    const p = await api('/api/perfil?id_cliente=' + id);
+    document.getElementById('perfTelefono').value = p.telefono || '';
+    document.getElementById('perfCiudad').value = p.ciudad_origen || '';
+    document.getElementById('perfIdioma').value = p.idioma || 'es';
+    document.getElementById('perfCanal').value = p.canal_preferido || 'correo';
+    document.getElementById('perfAnticipacion').value = String(p.anticipacion_recordatorio || 24);
+    document.getElementById('perfPromos').checked = p.acepta_promociones === 1;
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function guardarPerfil() {
+  try {
+    const id = Number(document.getElementById('perfIdCliente').value || 1);
+    const body = {
+      id_cliente: id,
+      telefono: document.getElementById('perfTelefono').value,
+      ciudad_origen: document.getElementById('perfCiudad').value,
+      idioma: document.getElementById('perfIdioma').value,
+      canal_preferido: document.getElementById('perfCanal').value,
+      anticipacion_recordatorio: Number(document.getElementById('perfAnticipacion').value),
+      acepta_promociones: document.getElementById('perfPromos').checked ? 1 : 0
+    };
+    const res = await api('/api/perfil', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    mostrarAlerta(res.mensaje);
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function cargarNotificaciones() {
+  const res = await api('/api/notificaciones');
+  document.getElementById('tbodyNotificaciones').innerHTML = (res.filas || []).map(n =>
+    `<tr><td>${n.id_notificacion}</td><td>${n.cliente}</td><td><span class="badge bg-info text-dark">${n.tipo}</span></td><td>${n.canal}</td><td>${n.fecha_programada}</td><td><span class="badge bg-secondary">${n.estado}</span></td><td>${n.mensaje}</td></tr>`
+  ).join('');
+}
+
+async function enviarPromocion() {
+  try {
+    const msg = document.getElementById('txtPromoMsg').value;
+    const res = await api('/api/notificaciones/promocion', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({mensaje: msg}) });
+    mostrarAlerta(res.mensaje);
+    cargarNotificaciones();
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function cargarResumenSidebar() {
+  const res = await api('/api/resumen');
+  const map = {};
+  (res.conteos || []).forEach(c => map[c.tabla] = c.filas);
+  const renderGrupo = (id, list) => {
+    document.getElementById(id).innerHTML = list.map(t =>
+      `<button class="table-sidebar-btn ${t===tablaActual?'active':''}" onclick="cargarTablaCrud('${t}')">
+        <span>${t}</span><span class="badge bg-secondary">${map[t]??0}</span>
+      </button>`
+    ).join('');
+  };
+  renderGrupo('listaTablasNucleo', TABLAS_NUCLEO);
+  renderGrupo('listaTablasDominio', TABLAS_DOMINIO);
+}
+
+function filtrarDebounced() { clearTimeout(filtroTimer); filtroTimer = setTimeout(() => cargarTablaCrud(tablaActual), 250); }
+
+async function cargarTablaCrud(tabla) {
+  tablaActual = tabla;
+  await cargarResumenSidebar();
+  document.getElementById('crudTituloTabla').textContent = tabla;
+  const q = encodeURIComponent(document.getElementById('crudBuscar').value || '');
+  const scope = document.getElementById('chkScopeLocal').checked;
+  const data = await api(`/api/tabla?nombre=${tabla}&q=${q}&soloMiLocal=${scope}`);
+  metaColumnas = data.columnas || [];
+  document.getElementById('crudInfoFk').textContent = (data.foraneas || []).map(f => `${f.from}->${f.table}(${f.on_delete})`).join(' · ') || 'Tabla catálogo / entidad padre';
+
+  document.getElementById('crudForm').innerHTML = metaColumnas.map(c =>
+    `<div class="col-md-3">
+      <label class="form-label small fw-semibold mb-0">${c.name}${c.pk?' 🔑':''}</label>
+      <input type="text" class="form-control form-control-sm" id="fld_${c.name}" placeholder="${c.type}">
+    </div>`
+  ).join('');
+
+  const esPlato = tabla === 'Plato';
+  document.getElementById('boxPlatoEtiquetas').classList.toggle('d-none', !esPlato);
+  if (esPlato) cargarEtiquetasPlato(0);
+
+  document.getElementById('crudThead').innerHTML = '<tr>' + metaColumnas.map(c => `<th>${c.name}</th>`).join('') + '<th>Acciones</th></tr>';
+  document.getElementById('crudTbody').innerHTML = (data.filas || []).map(r => {
+    const jsonRow = encodeURIComponent(JSON.stringify(r));
+    return `<tr>${metaColumnas.map(c => `<td>${r[c.name] ?? ''}</td>`).join('')}
+      <td class="text-nowrap">
+        <button class="btn btn-outline-primary btn-sm py-0" onclick="editarFila('${jsonRow}')">Editar</button>
+        <button class="btn btn-outline-danger btn-sm py-0" onclick="eliminarFila('${jsonRow}')">Eliminar</button>
+      </td></tr>`;
+  }).join('');
+}
+
+function editarFila(encoded) {
+  const row = JSON.parse(decodeURIComponent(encoded));
+  metaColumnas.forEach(c => {
+    const el = document.getElementById('fld_' + c.name);
+    if (el) el.value = row[c.name] ?? '';
+  });
+  if (tablaActual === 'Plato' && row.id_plato) cargarEtiquetasPlato(row.id_plato);
+}
+
+function limpiarFormularioCrud() {
+  metaColumnas.forEach(c => { const el = document.getElementById('fld_' + c.name); if (el) el.value = ''; });
+  if (tablaActual === 'Plato') cargarEtiquetasPlato(0);
+}
+
+async function cargarEtiquetasPlato(idPlato) {
+  const res = await api('/api/plato/etiquetas?id_plato=' + idPlato);
+  const set = new Set(res.asignadas || []);
+  document.getElementById('checksEtiquetas').innerHTML = (res.todas || []).map(e =>
+    `<label class="form-check form-check-inline small m-0">
+      <input type="checkbox" class="form-check-input chk-etiq" value="${e.id_etiqueta}" ${set.has(e.id_etiqueta)?'checked':''}>
+      <span>${e.nombre_etiqueta}</span>
+    </label>`
+  ).join('');
+}
+
+async function guardarCrud(esUpdate) {
+  try {
+    const payload = {};
+    metaColumnas.forEach(c => {
+      const val = document.getElementById('fld_' + c.name)?.value;
+      if (val !== undefined && val !== '') payload[c.name] = val;
+    });
+    const res = await api(`/api/tabla?nombre=${tablaActual}`, {
+      method: esUpdate ? 'PUT' : 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (tablaActual === 'Plato' && payload.id_plato) {
+      const etiqs = Array.from(document.querySelectorAll('.chk-etiq:checked')).map(c => Number(c.value));
+      await api('/api/plato/etiquetas', {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({id_plato: Number(payload.id_plato), etiquetas: etiqs})
+      });
+    }
+    mostrarAlerta(res.mensaje);
+    await cargarTablaCrud(tablaActual);
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function eliminarFila(encoded) {
+  const row = JSON.parse(decodeURIComponent(encoded));
+  const keys = {};
+  metaColumnas.filter(c => c.pk).forEach(c => keys[c.name] = row[c.name]);
+  try {
+    const res = await api(`/api/tabla?nombre=${tablaActual}`, {
+      method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify(keys)
+    });
+    mostrarAlerta(res.mensaje);
+    await cargarTablaCrud(tablaActual);
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+async function cargarListaReportes() {
+  const res = await api('/api/reportes');
+  document.getElementById('listaReportes').innerHTML = (res.reportes || []).map(r =>
+    `<button class="list-group-item list-group-item-action ${r.codigo===reporteActual?'active':''}" onclick="cargarReporte('${r.codigo}')">
+      <div class="d-flex justify-content-between align-items-center">
+        <strong>${r.codigo}</strong>
+        <span class="badge bg-info text-dark badge-lvl">${r.nivel.split(' ')[0]}</span>
+      </div>
+      <div class="small">${r.titulo}</div>
+    </button>`
+  ).join('');
+}
+
+function construirFiltrosReporte(cod) {
+  const box = document.getElementById('repFiltros');
+  if (cod === 'R-01') {
+    box.innerHTML = `<div class="col-md-4"><label class="form-label small">Precio mínimo</label><input id="fMinP" type="number" class="form-control form-control-sm" value="15000"></div>
+      <div class="col-md-4"><label class="form-label small">Precio máximo</label><input id="fMaxP" type="number" class="form-control form-control-sm" value="50000"></div>
+      <div class="col-md-4"><button class="btn btn-success btn-sm" onclick="cargarReporte('R-01', true)">Consultar</button></div>`;
+  } else if (cod === 'R-02') {
+    box.innerHTML = `<div class="col-md-5"><label class="form-label small">Zona</label><select id="fZona" class="form-select form-select-sm"><option value="">Todas</option><option>salon</option><option>terraza</option><option>mirador</option><option>barra</option></select></div>
+      <div class="col-md-4"><button class="btn btn-success btn-sm" onclick="cargarReporte('R-02', true)">Consultar</button></div>`;
+  } else if (cod === 'R-03') {
+    box.innerHTML = `<div class="col-md-5"><label class="form-label small">Vehículo</label><select id="fVeh" class="form-select form-select-sm"><option value="">Todos</option><option>motocicleta</option><option>bicicleta</option><option>automovil</option></select></div>
+      <div class="col-md-4"><button class="btn btn-success btn-sm" onclick="cargarReporte('R-03', true)">Consultar</button></div>`;
+  } else if (cod === 'R-04') {
+    box.innerHTML = `<div class="col-md-3"><label class="form-label small">Desde</label><input id="fDesde" type="date" class="form-control form-control-sm" value="2025-01-01"></div>
+      <div class="col-md-3"><label class="form-label small">Hasta</label><input id="fHasta" type="date" class="form-control form-control-sm" value="2027-12-31"></div>
+      <div class="col-md-3"><label class="form-label small">Mín. unidades</label><input id="fMinC" type="number" class="form-control form-control-sm" value="15"></div>
+      <div class="col-md-3"><button class="btn btn-success btn-sm" onclick="cargarReporte('R-04', true)">Consultar</button></div>`;
+  } else if (cod === 'R-05') {
+    box.innerHTML = `<div class="col-md-5"><label class="form-label small">Franja</label><select id="fFranja" class="form-select form-select-sm"><option value="">Todas</option><option>desayuno</option><option>almuerzo</option><option>cena</option></select></div>
+      <div class="col-md-4"><button class="btn btn-success btn-sm" onclick="cargarReporte('R-05', true)">Consultar</button></div>`;
+  } else {
+    box.innerHTML = '';
+  }
+}
+
+async function cargarReporte(cod, desdeBtn=false) {
+  if (!desdeBtn || reporteActual !== cod) {
+    reporteActual = cod;
+    await cargarListaReportes();
+    construirFiltrosReporte(cod);
+  }
+  const qs = new URLSearchParams({ codigo: cod });
+  if (cod === 'R-01') { qs.set('minPrecio', document.getElementById('fMinP')?.value || 15000); qs.set('maxPrecio', document.getElementById('fMaxP')?.value || 50000); }
+  if (cod === 'R-02') { qs.set('zona', document.getElementById('fZona')?.value || ''); }
+  if (cod === 'R-03') { qs.set('vehiculo', document.getElementById('fVeh')?.value || ''); }
+  if (cod === 'R-04') { qs.set('desde', document.getElementById('fDesde')?.value || '2025-01-01'); qs.set('hasta', document.getElementById('fHasta')?.value || '2027-12-31'); qs.set('minCantidad', document.getElementById('fMinC')?.value || 15); }
+  if (cod === 'R-05') { qs.set('franja', document.getElementById('fFranja')?.value || ''); }
+
+  document.getElementById('btnDescargarPdf').href = '/api/reporte/pdf?' + qs.toString();
+  const res = await api('/api/reporte?' + qs.toString());
+  document.getElementById('repTitulo').textContent = res.titulo;
+  document.getElementById('repSub').textContent = `Nivel: ${res.nivel} · Vista SQL: ${res.vistaSql} · Filas: ${res.filas.length}`;
+  document.getElementById('repSql').textContent = res.sql;
+  renderTabla('repThead', 'repTbody', res.columnas, res.filas);
+  renderChartReporte(cod, res.filas);
+}
+
+function renderChartReporte(cod, filas) {
+  const box = document.getElementById('boxChart');
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+  if (!['R-04','R-05','R-06'].includes(cod) || !filas.length) {
+    box.classList.add('d-none'); return;
+  }
+  box.classList.remove('d-none');
+  const ctx = document.getElementById('repChart').getContext('2d');
+  if (cod === 'R-04') {
+    const top = filas.slice(0, 8);
+    chartInst = new Chart(ctx, { type:'bar', data:{ labels: top.map(r=>r.nombre_plato), datasets:[{ label:'Ingresos históricos ($)', data: top.map(r=>r.ingresos_historicos), backgroundColor:'#15803d' }] }, options:{ indexAxis:'y', responsive:true } });
+  } else if (cod === 'R-05') {
+    const top = filas.slice(0, 10);
+    chartInst = new Chart(ctx, { type:'bar', data:{ labels: top.map(r=>`${r.nombre_comercial.substring(0,18)} (${r.dia_semana} ${r.franja_horaria})`), datasets:[{ label:'Comensales atendidos', data: top.map(r=>r.total_comensales), backgroundColor:'#0369a1' }] }, options:{ responsive:true } });
+  } else if (cod === 'R-06') {
+    const mapMod = {};
+    filas.forEach(r => mapMod[r.tipo_pedido] = (mapMod[r.tipo_pedido] || 0) + Number(r.recaudo_total));
+    chartInst = new Chart(ctx, { type:'doughnut', data:{ labels: Object.keys(mapMod), datasets:[{ data: Object.values(mapMod), backgroundColor:['#15803d','#0284c7','#d97706'] }] }, options:{ responsive:true, maintainAspectRatio:false } });
+  }
+}
+
+function descargarPlantilla(tipo, inputId) {
+  const id = document.getElementById(inputId).value || 1;
+  window.open(`/api/plantilla/pdf?tipo=${tipo}&id=${id}`, '_blank');
+}
+
+function cargarPresetSql(n) {
+  const presets = {
+    1: "SELECT * FROM vw_Defensa_GruposGrandes ORDER BY numero_comensales DESC;",
+    2: "SELECT * FROM vw_Defensa_PrecioHistorico WHERE id_pedido = 901;",
+    3: "SELECT * FROM vw_ReservaDetalle LIMIT 25;",
+    4: "SELECT cliente, total_pagado FROM vw_TotalPagadoCliente WHERE total_pagado > (SELECT AVG(total_pagado) FROM vw_TotalPagadoCliente) ORDER BY total_pagado DESC;",
+    5: "SELECT * FROM vw_IngresosPrestador ORDER BY total_ingresos DESC;"
+  };
+  document.getElementById('txtSqlLibre').value = presets[n];
+  ejecutarSqlLibre();
+}
+
+async function ejecutarSqlLibre() {
+  try {
+    const sql = document.getElementById('txtSqlLibre').value;
+    const res = await api('/api/sql', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({sql}) });
+    renderTabla('sqlThead', 'sqlTbody', res.columnas, res.filas);
+  } catch (e) { mostrarAlerta(e.message, 'danger'); }
+}
+
+function renderTabla(theadId, tbodyId, cols, rows) {
+  document.getElementById(theadId).innerHTML = '<tr>' + (cols||[]).map(c => `<th>${c}</th>`).join('') + '</tr>';
+  document.getElementById(tbodyId).innerHTML = (rows||[]).map(r =>
+    '<tr>' + (cols||[]).map(c => `<td>${r[c] ?? ''}</td>`).join('') + '</tr>'
+  ).join('');
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  modalLoginBs = new bootstrap.Modal(document.getElementById('modalLogin'));
+  await refrescarSesion();
+  await cargarCatalogo();
+  await cargarResumenSidebar();
+  await cargarListaReportes();
+});
+</script>
+</body>
+</html>
