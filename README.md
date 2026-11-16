@@ -1,70 +1,48 @@
-# QuindíoStay — Módulo Restaurantes y Gastronomía (Dominio 4)
+# QuindíoStay - Módulo de Restaurantes y Gastronomía (Dominio 4)
 
-Proyecto Final de **Bases de Datos I (12331 - Grupo 02D)** — Programa de Ingeniería de Sistemas y Computación, **Universidad del Quindío**.  
-**Autor:** Anderson Sneider Meneses Zambrano · **Docente:** Carolina Londoño Idárraga
+Proyecto final de Bases de Datos I (12331 - Grupo 02D)  
+Programa de Ingeniería de Sistemas y Computación - Universidad del Quindío
 
----
+- Estudiante: Anderson Sneider Meneses Zambrano
+- Grupo de entrega: 01 (Curso 02D)
+- Docente: Carolina Londoño Idárraga
 
-## Arquitectura del Sistema
-- **Lenguaje y Backend:** Java 21 (JDK 21), patrón **MVC + DAO** (`HttpServer` embebido + API REST JSON).
-- **Acceso a Datos:** **JDBC puro** (`DriverManager`, `PreparedStatement`, `ResultSet`) sobre vistas SQL (`vw_*`) y consultas parametrizadas.
-- **Generación de PDFs:** **OpenPDF 2.0.3** (`GeneradorPDF.java`) para los **10 reportes gerenciales** y las **4 plantillas transaccionales** (Comprobante de Reserva, Comprobante de Pago, Factura de Pedido, Autorización de Tratamiento de Datos).
-- **Frontend:** HTML5 + Bootstrap 5.3 + **Chart.js 4.4** (3 gráficos estadísticos en R-04, R-05 y R-06).
-- **Seguridad:** Contraseñas almacenadas con hash **SHA-256** validado directamente contra las tablas `UsuarioSistema` (`administrador`, `encargado`, `operador`) y `PerfilCliente` (`cliente`).
+## Sobre el proyecto
+Aplicación web y base de datos relacional para la gestión de restaurantes, mesas, reservas, carta de platos, pedidos en mesa y domicilios en el departamento del Quindío.
 
----
+- Backend en Java 21 usando `HttpServer`, patrón MVC/DAO y JDBC (`DriverManager`, `PreparedStatement`, `ResultSet`).
+- Base de datos de 21 tablas y 15 vistas SQL (`vw_*`), con scripts para MySQL 8, SQL Server, Oracle y SQLite local.
+- Generación de 10 reportes y 4 plantillas PDF con OpenPDF 2.0.3.
+- Interfaz web con HTML, Bootstrap 5 y gráficos con Chart.js (reportes R-04, R-05 y R-06).
+- Inicio de sesión por roles (`administrador`, `encargado`, `operador` en `UsuarioSistema` y `cliente` en `PerfilCliente`) con contraseñas en SHA-256.
 
-## Estructura del Repositorio
+## Estructura de carpetas
 
-```text
-QuindioStay-BDI-Restaurantes/
-├── sql/
-│   ├── mysql/
-│   │   ├── 01_DDL_QuindioStay.sql                 # Motor elegido: crea BD, 21 tablas, PK, FK, UNIQUE, CHECK
-│   │   ├── 02_DML_QuindioStay.sql                 # Carga asimétrica (12 municipios, 20 restaurantes, 510 reservas...)
-│   │   └── 03_Vistas_y_Reportes_QuindioStay.sql   # 15 vistas SQL (vw_*) y consultas de los 10 reportes
-│   ├── sqlserver/
-│   │   ├── 01_DDL_QuindioStay.sql
-│   │   ├── 02_DML_QuindioStay.sql
-│   │   └── 03_Vistas_y_Reportes_QuindioStay.sql   # Vistas CREATE OR ALTER VIEW ... GO (Clase 18)
-│   ├── oracle/
-│   │   ├── 01_DDL_QuindioStay.sql
-│   │   ├── 02_DML_QuindioStay.sql
-│   │   └── 03_Vistas_y_Reportes_QuindioStay.sql
-│   └── sqlite/
-│       └── 00_vistas_sqlite.sql                   # Vistas locales para arranque inmediato sin servidor externo
-├── src/co/edu/uniquindio/quindiostay/
-│   ├── Main.java                                  # Arranque del servidor HTTP e inicialización JDBC
-│   ├── config/ConexionBD.java                     # Conexión JDBC multi-motor y hash SHA-256
-│   ├── controller/ApiController.java              # Controlador REST + RBAC por rol + endpoints PDF
-│   ├── dao/                                       # AuthDAO, CrudDAO (21 tablas), NegocioDAO, ReporteDAO
-│   ├── pdf/GeneradorPDF.java                      # OpenPDF 2.0.3 (10 reportes + 4 plantillas)
-│   └── util/JsonUtil.java                         # Serializador JSON nativo sin dependencias pesadas
-├── public/index.html                              # Interfaz web Bootstrap 5 + Chart.js
-├── lib/                                           # Dependencias JAR (OpenPDF, MySQL, SQL Server, SQLite)
-├── data/quindiostay.db                            # Base de datos SQLite precargada para ejecución plug-and-play
-├── docs/                                          # Diagramas MER/Arquitectura y capturas verificadas
-├── pdf_exportados/                                # Salidas PDF de referencia de reportes y plantillas
-├── config.properties                              # Selección de motor (sqlite | mysql | sqlserver)
-├── pom.xml                                        # Descriptor Maven opcional (IntelliJ / VS Code)
-├── COMPILAR.bat                                   # Compila el proyecto en Java 21
-└── INICIAR_SISTEMA.bat                            # Compila (si falta ./out) y abre http://localhost:8080
-```
+- `sql/mysql/`: scripts `01_DDL_QuindioStay.sql`, `02_DML_QuindioStay.sql` y `03_Vistas_y_Reportes_QuindioStay.sql` (motor principal en MySQL 8).
+- `sql/sqlserver/`: adaptación de DDL, DML y vistas para SQL Server.
+- `sql/oracle/`: adaptación de DDL, DML y vistas para Oracle.
+- `sql/sqlite/`: vistas locales para pruebas rápidas con SQLite.
+- `src/co/edu/uniquindio/quindiostay/`: código fuente Java (`Main`, `ConexionBD`, `ApiController`, DAOs, `GeneradorPDF`, `JsonUtil`).
+- `public/index.html`: interfaz web del sistema.
+- `lib/`: librerías `.jar` (OpenPDF y drivers JDBC).
+- `data/quindiostay.db`: base SQLite con los datos cargados para abrir el sistema rápido.
+- `docs/`: documento final, diagramas y capturas del proyecto.
+- `pdf_exportados/`: ejemplos de los reportes y plantillas generados en PDF.
 
----
+## Cómo ejecutarlo en Windows (JDK 21)
 
-## Ejecución Rápida (Windows + JDK 21)
+1. Abrir `COMPILAR.bat` (si no se ha compilado) y luego `INICIAR_SISTEMA.bat`.
+2. Entrar en el navegador a `http://localhost:8080`.
+3. Por defecto `config.properties` apunta a SQLite (`data/quindiostay.db`) para poder probar el sistema sin instalar un servidor aparte.
+4. Si se quiere conectar a MySQL 8 o SQL Server:
+   - Correr primero los 3 scripts en orden (`01`, `02` y `03`) sobre una base vacía.
+   - Cambiar `db.engine` y los datos de conexión en `config.properties`.
 
-1. Hacer doble clic en **`INICIAR_SISTEMA.bat`** (o ejecutar desde terminal `COMPILAR.bat` y luego `INICIAR_SISTEMA.bat`).
-2. Abrir **`http://localhost:8080`** en el navegador.
-3. Para conectar directamente a **MySQL 8.0** o **SQL Server 2022**:
-   - Ejecutar los 3 scripts numerados (`01` -> `02` -> `03`) de la carpeta `sql/mysql/` o `sql/sqlserver/` en una base de datos vacía.
-   - Cambiar `db.engine=mysql` o `db.engine=sqlserver` y sus credenciales en `config.properties`.
+## Usuarios de prueba
 
-### Credenciales de Prueba
-| Rol en BD | Usuario / Correo | Contraseña |
+| Rol | Usuario o correo | Clave |
 | :--- | :--- | :--- |
 | `administrador` | `admin_quindio` | `Quindio2026*` |
 | `encargado` | `encargado_cocora` | `Quindio2026*` |
 | `operador` | `operador_salento` | `Quindio2026*` |
-| `cliente` (`PerfilCliente`) | `valentina.arango1@correo.com` | `Cliente2026*` |
+| `cliente` | `valentina.arango1@correo.com` | `Cliente2026*` |
