@@ -33,7 +33,7 @@ public class ConexionBD {
     }
 
     public static String getEngine() {
-        return PROPS.getProperty("db.engine", "sqlite").trim().toLowerCase();
+        return PROPS.getProperty("db.engine", "mysql").trim().toLowerCase();
     }
 
     public static int getServerPort() {

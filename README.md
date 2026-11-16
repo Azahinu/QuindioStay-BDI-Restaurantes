@@ -29,14 +29,13 @@ Aplicación web y base de datos relacional para la gestión de restaurantes, mes
 - `docs/`: documento final, diagramas y capturas del proyecto.
 - `pdf_exportados/`: ejemplos de los reportes y plantillas generados en PDF.
 
-## Cómo ejecutarlo en Windows (JDK 21)
+## Cómo ejecutarlo en Windows (JDK 21 + MySQL 8)
 
-1. Abrir `COMPILAR.bat` (si no se ha compilado) y luego `INICIAR_SISTEMA.bat`.
-2. Entrar en el navegador a `http://localhost:8080`.
-3. Por defecto `config.properties` apunta a SQLite (`data/quindiostay.db`) para poder probar el sistema sin instalar un servidor aparte.
-4. Si se quiere conectar a MySQL 8 o SQL Server:
-   - Correr primero los 3 scripts en orden (`01`, `02` y `03`) sobre una base vacía.
-   - Cambiar `db.engine` y los datos de conexión en `config.properties`.
+1. Cargar los scripts de `sql/mysql/` en orden (`01`, `02`, `03`) sobre el servidor MySQL 8.
+2. Revisar `config.properties` (`db.engine=mysql`, puerto `3306`, base `QuindioStay`).
+3. Abrir `COMPILAR.bat` (si no se ha compilado) y luego `INICIAR_SISTEMA.bat`.
+4. Entrar en el navegador a `http://localhost:8080`.
+   *(También incluye configuración lista para SQL Server o SQLite local cambiando `db.engine` en `config.properties`).*
 
 ## Usuarios de prueba
 

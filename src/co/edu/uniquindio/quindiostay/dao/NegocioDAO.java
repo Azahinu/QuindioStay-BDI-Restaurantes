@@ -37,12 +37,15 @@ public class NegocioDAO {
                     "SELECT id_mesa, id_prestador, numero_mesa, capacidad, zona, estado FROM Mesa WHERE estado <> 'fuera_de_servicio' ORDER BY id_prestador, numero_mesa"));
             resp.put("platos", queryList(con,
                     "SELECT id_plato, id_prestador, id_categoria, nombre_plato, precio_actual, estado FROM Plato WHERE estado='disponible' ORDER BY id_prestador, id_plato"));
+            String nomDom = concatEspacio("nombres", "apellidos");
+            String docCli = concatEspacio("tipo_documento", "numero_documento");
+            String nomCli = concatEspacio("c.nombres", "c.apellidos");
             resp.put("domiciliarios", queryList(con,
-                    "SELECT id_domiciliario, id_prestador, nombres || ' ' || apellidos AS nombre, tipo_vehiculo, estado FROM Domiciliario WHERE estado IN ('disponible','en_ruta') ORDER BY id_prestador, id_domiciliario"));
+                    "SELECT id_domiciliario, id_prestador, " + nomDom + " AS nombre, tipo_vehiculo, estado FROM Domiciliario WHERE estado IN ('disponible','en_ruta') ORDER BY id_prestador, id_domiciliario"));
             resp.put("clientes", queryList(con,
-                    "SELECT id_cliente, tipo_documento || ' ' || numero_documento AS doc, nombres || ' ' || apellidos AS nombre, correo FROM Cliente ORDER BY id_cliente DESC LIMIT 80"));
+                    "SELECT id_cliente, " + docCli + " AS doc, " + concatEspacio("nombres", "apellidos") + " AS nombre, correo FROM Cliente ORDER BY id_cliente DESC LIMIT 80"));
             resp.put("reservasRecientes", queryList(con,
-                    "SELECT r.id_reserva, c.nombres || ' ' || c.apellidos AS cliente, pr.nombre_comercial AS prestador, r.fecha_servicio, r.franja_horaria, r.numero_comensales, r.valor_total, r.estado FROM Reserva r JOIN Cliente c ON r.id_cliente=c.id_cliente LEFT JOIN Plan pl ON r.id_plan=pl.id_plan LEFT JOIN Experiencia ex ON r.id_experiencia=ex.id_experiencia LEFT JOIN Prestador pr ON pr.id_prestador=COALESCE(pl.id_prestador, ex.id_prestador) ORDER BY r.id_reserva DESC LIMIT 40"));
+                    "SELECT r.id_reserva, " + nomCli + " AS cliente, pr.nombre_comercial AS prestador, r.fecha_servicio, r.franja_horaria, r.numero_comensales, r.valor_total, r.estado FROM Reserva r JOIN Cliente c ON r.id_cliente=c.id_cliente LEFT JOIN Plan pl ON r.id_plan=pl.id_plan LEFT JOIN Experiencia ex ON r.id_experiencia=ex.id_experiencia LEFT JOIN Prestador pr ON pr.id_prestador=COALESCE(pl.id_prestador, ex.id_prestador) ORDER BY r.id_reserva DESC LIMIT 40"));
             resp.put("pedidosRecientes", queryList(con,
                     "SELECT pe.id_pedido, pr.nombre_comercial AS prestador, pe.fecha_hora, pe.tipo_pedido, pe.total_pedido, pe.estado_pedido FROM Pedido pe JOIN Prestador pr ON pe.id_prestador=pr.id_prestador ORDER BY pe.id_pedido DESC LIMIT 30"));
             return resp;
@@ -469,8 +472,9 @@ public class NegocioDAO {
     }
 
     public Map<String, Object> listarNotificaciones(Integer idClienteFiltro) throws SQLException {
+        String nomCli = concatEspacio("c.nombres", "c.apellidos");
         String sql = """
-            SELECT n.id_notificacion, n.id_cliente, c.nombres || ' ' || c.apellidos AS cliente,
+            SELECT n.id_notificacion, n.id_cliente, %s AS cliente,
                    n.id_reserva, n.tipo, n.canal, n.mensaje, n.fecha_programada, n.fecha_real, n.estado,
                    pc.acepta_promociones
             FROM Notificacion n
@@ -479,7 +483,7 @@ public class NegocioDAO {
             WHERE (? IS NULL OR n.id_cliente = ?)
             ORDER BY n.id_notificacion DESC
             LIMIT 100
-            """;
+            """.formatted(nomCli);
         try (Connection con = ConexionBD.obtenerConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
             if (idClienteFiltro == null) {
@@ -625,5 +629,12 @@ public class NegocioDAO {
         } catch (Exception e) {
             return def;
         }
+    }
+
+    private static String concatEspacio(String a, String b) {
+        if ("sqlite".equals(ConexionBD.getEngine())) {
+            return a + " || ' ' || " + b;
+        }
+        return "CONCAT(" + a + ", ' ', " + b + ")";
     }
 }

@@ -3,128 +3,263 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuindíoStay - Restaurantes</title>
+  <title>QuindíoStay - Gestión de Restaurantes</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --qs-brand: #1f4d3a;
-      --qs-brand-dark: #16382a;
-      --qs-bg: #f5f6f8;
-      --qs-border: #dee2e6;
+      --qs-primary: #1b4332;
+      --qs-primary-hover: #143326;
+      --qs-accent: #2d6a4f;
+      --qs-bg: #f6f7f9;
+      --qs-card: #ffffff;
+      --qs-border: #e5e7eb;
+      --qs-muted: #6b7280;
     }
     body {
-      background: var(--qs-bg);
-      color: #212529;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--qs-bg);
+      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 0.93rem;
     }
     .navbar-qs {
-      background: var(--qs-brand-dark);
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      background-color: var(--qs-primary);
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      padding: .65rem 1.25rem;
     }
-    .nav-tabs-qs {
-      border-bottom: 1px solid var(--qs-border);
-      background: #fff;
-      padding: .5rem .75rem 0;
-      border-radius: 8px 8px 0 0;
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.14);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    .nav-tabs-qs .nav-link {
-      color: #495057;
-      border: none;
-      border-bottom: 2px solid transparent;
-      border-radius: 0;
-      padding: .55rem .9rem;
-      font-size: .92rem;
+    .engine-pill {
+      background: rgba(255,255,255,.15);
+      color: #e2e8f0;
+      font-size: .72rem;
+      padding: .2rem .55rem;
+      border-radius: 999px;
       font-weight: 500;
+      letter-spacing: .03em;
     }
-    .nav-tabs-qs .nav-link:hover {
-      color: var(--qs-brand);
+    .nav-pills-qs {
+      background: #fff;
+      border: 1px solid var(--qs-border);
+      border-radius: 12px;
+      padding: .35rem;
+      gap: .25rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,.03);
     }
-    .nav-tabs-qs .nav-link.active {
-      color: var(--qs-brand);
-      background: transparent;
-      border-bottom-color: var(--qs-brand);
+    .nav-pills-qs .nav-link {
+      color: #4b5563;
+      border-radius: 8px;
+      padding: .5rem .95rem;
+      font-size: .88rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      transition: all .15s ease;
+    }
+    .nav-pills-qs .nav-link:hover {
+      background: #f3f4f6;
+      color: var(--qs-primary);
+    }
+    .nav-pills-qs .nav-link.active {
+      background-color: var(--qs-primary);
+      color: #fff;
       font-weight: 600;
     }
     .card {
+      background: var(--qs-card);
       border: 1px solid var(--qs-border);
-      border-radius: 8px;
-      box-shadow: none;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
     }
-    .card-title-qs {
-      font-size: 1.02rem;
+    .kpi-card {
+      padding: .95rem 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kpi-label { font-size: .78rem; color: var(--qs-muted); font-weight: 500; }
+    .kpi-val { font-size: 1.45rem; font-weight: 700; color: #111827; line-height: 1.2; }
+    .kpi-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: #ecfdf5; color: var(--qs-primary);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .section-title {
+      font-size: 1.05rem;
       font-weight: 600;
-      color: #1e293b;
+      color: #111827;
+    }
+    .form-label {
+      font-size: .82rem;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: .25rem;
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      border-color: #d1d5db;
+      font-size: .88rem;
+      padding: .42rem .7rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--qs-accent);
+      box-shadow: 0 0 0 3px rgba(45,106,79,.12);
     }
     .btn-qs {
-      background-color: var(--qs-brand);
-      border-color: var(--qs-brand);
+      background-color: var(--qs-primary);
+      border-color: var(--qs-primary);
       color: #fff;
+      border-radius: 8px;
+      font-weight: 500;
+      padding: .48rem 1rem;
     }
     .btn-qs:hover {
-      background-color: var(--qs-brand-dark);
-      border-color: var(--qs-brand-dark);
+      background-color: var(--qs-primary-hover);
+      border-color: var(--qs-primary-hover);
       color: #fff;
     }
+    .mesa-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .35rem .65rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      font-size: .82rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all .12s ease;
+    }
+    .mesa-chip:has(input:checked) {
+      background: #ecfdf5;
+      border-color: var(--qs-accent);
+      color: var(--qs-primary);
+      font-weight: 600;
+    }
+    .mesa-chip input { accent-color: var(--qs-primary); }
+    .pill-status {
+      font-size: .75rem;
+      font-weight: 600;
+      padding: .22rem .55rem;
+      border-radius: 999px;
+      display: inline-block;
+    }
+    .pill-ok { background: #dcfce7; color: #166534; }
+    .pill-info { background: #dbeafe; color: #1e40af; }
+    .pill-warn { background: #fef3c7; color: #92400e; }
+    .pill-bad { background: #fee2e2; color: #991b1b; }
+    .pill-gray { background: #f3f4f6; color: #374151; }
     .table-sidebar-btn {
       text-align: left;
-      font-size: .85rem;
-      padding: .4rem .65rem;
-      border-radius: 6px;
+      font-size: .84rem;
+      padding: .42rem .7rem;
+      border-radius: 8px;
       border: 1px solid transparent;
       background: transparent;
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: #334155;
+      color: #374151;
+      margin-bottom: 2px;
     }
-    .table-sidebar-btn:hover { background: #eef1f4; }
-    .table-sidebar-btn.active, .list-group-item.active {
-      background-color: var(--qs-brand);
-      border-color: var(--qs-brand);
+    .table-sidebar-btn:hover { background: #f3f4f6; }
+    .table-sidebar-btn.active {
+      background: var(--qs-primary);
       color: #fff;
       font-weight: 600;
     }
+    .table-sidebar-btn.active .badge {
+      background: rgba(255,255,255,.22) !important;
+      color: #fff !important;
+    }
+    .list-group-item-action {
+      border-radius: 8px !important;
+      border: 1px solid transparent;
+      margin-bottom: 3px;
+      padding: .55rem .75rem;
+    }
+    .list-group-item.active {
+      background-color: var(--qs-primary);
+      border-color: var(--qs-primary);
+      color: #fff;
+    }
+    .list-group-item.active .text-muted { color: rgba(255,255,255,.8) !important; }
     .sql-box {
-      background: #f8f9fa;
-      color: #1e293b;
+      background: #f9fafb;
+      color: #1f2937;
       border: 1px solid var(--qs-border);
       font-family: Consolas, monospace;
       font-size: .8rem;
-      border-radius: 6px;
-      padding: .65rem;
+      border-radius: 8px;
+      padding: .75rem;
       white-space: pre-wrap;
     }
-    .badge-lvl { font-size: .72rem; }
+    .table > thead th {
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+      color: #4b5563;
+      background-color: #f9fafb;
+      border-bottom: 1px solid var(--qs-border);
+      padding: .55rem .65rem;
+    }
+    .table > tbody td {
+      padding: .52rem .65rem;
+      vertical-align: middle;
+      font-size: .85rem;
+    }
+    .doc-icon-box {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: #f3f4f6; color: var(--qs-primary);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: .75rem;
+    }
   </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark navbar-qs px-3 py-2">
-  <div class="container-fluid">
-    <span class="navbar-brand fw-semibold d-flex align-items-center gap-2 mb-0">
-      <span>QuindíoStay Restaurantes</span>
-      <span class="badge bg-light text-dark fw-normal" id="badgeMotor" style="font-size:.72rem;">SQLITE</span>
-    </span>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-qs">
+  <div class="container-fluid" style="max-width: 1420px;">
+    <div class="d-flex align-items-center gap-2 text-white">
+      <div class="brand-icon">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+        </svg>
+      </div>
+      <div>
+        <div class="fw-semibold lh-sm" style="font-size:1.02rem;">QuindíoStay Restaurantes</div>
+        <div class="text-white-50" style="font-size:.73rem;">Plataforma gastronómica del Quindío</div>
+      </div>
+      <span class="engine-pill ms-2" id="badgeMotor">MYSQL</span>
+    </div>
     <div class="d-flex align-items-center gap-2 text-white">
       <div id="userInfoBox" class="small text-end me-2">
         <div class="fw-semibold" id="lblUsuario">Invitado</div>
-        <div class="opacity-75" id="lblRol" style="font-size:.78rem;">Inicia sesión para gestionar</div>
+        <div class="text-white-50" id="lblRol" style="font-size:.75rem;">Inicia sesión para gestionar</div>
       </div>
-      <button class="btn btn-outline-light btn-sm" onclick="abrirModalLogin()">Iniciar sesión</button>
-      <button class="btn btn-outline-light btn-sm d-none" id="btnLogout" onclick="cerrarSesion()">Salir</button>
+      <button class="btn btn-outline-light btn-sm rounded-3 px-3" onclick="abrirModalLogin()">Iniciar sesión</button>
+      <button class="btn btn-light btn-sm rounded-3 px-3 d-none" id="btnLogout" onclick="cerrarSesion()">Salir</button>
     </div>
   </div>
 </nav>
 
-<div class="container-fluid px-3 py-3" style="max-width: 1400px;">
-  <div id="alertGlobal" class="alert d-none alert-dismissible fade show" role="alert">
+<div class="container-fluid px-3 py-3" style="max-width: 1420px;">
+  <div id="alertGlobal" class="alert d-none alert-dismissible fade show rounded-3" role="alert">
     <span id="alertGlobalMsg"></span>
     <button type="button" class="btn-close" onclick="ocultarAlerta()"></button>
   </div>
 
   <!-- Navegación principal -->
-  <ul class="nav nav-tabs nav-tabs-qs mb-3 flex-wrap" id="mainTabs">
+  <ul class="nav nav-pills nav-pills-qs mb-3 flex-wrap" id="mainTabs">
     <li class="nav-item"><button class="nav-link active" data-tab="tabOperacion" onclick="cambiarTab('tabOperacion', this)">Reservas y pedidos</button></li>
     <li class="nav-item"><button class="nav-link" data-tab="tabPerfilNotif" onclick="cambiarTab('tabPerfilNotif', this)">Clientes y avisos</button></li>
     <li class="nav-item"><button class="nav-link" data-tab="tabCrud" onclick="cambiarTab('tabCrud', this)">Administrar tablas</button></li>
@@ -135,131 +270,159 @@
 
   <!-- TAB 1: RESERVAS Y PEDIDOS -->
   <div id="tabOperacion" class="tab-pane-custom">
+    <!-- Tarjetas resumen -->
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3">
+        <div class="card kpi-card">
+          <div><div class="kpi-label">Restaurantes afiliados</div><div class="kpi-val" id="kpiPrestadores">-</div></div>
+          <div class="kpi-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card kpi-card">
+          <div><div class="kpi-label">Reservas registradas</div><div class="kpi-val" id="kpiReservas">-</div></div>
+          <div class="kpi-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card kpi-card">
+          <div><div class="kpi-label">Platos en carta</div><div class="kpi-val" id="kpiPlatos">-</div></div>
+          <div class="kpi-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/></svg></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card kpi-card">
+          <div><div class="kpi-label">Pedidos realizados</div><div class="kpi-val" id="kpiPedidos">-</div></div>
+          <div class="kpi-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4ZM3 6h18"/></svg></div>
+        </div>
+      </div>
+    </div>
+
     <div class="row g-3">
       <div class="col-lg-6">
-        <div class="card p-3 h-100">
-          <div class="card-title-qs mb-1">Nueva reserva</div>
-          <p class="text-muted small mb-3">Selecciona el cliente, restaurante, mesas disponibles y el pago.</p>
-          <div class="row g-2">
+        <div class="card p-4 h-100">
+          <div class="section-title mb-1">Nueva reserva</div>
+          <p class="text-muted small mb-3">Elige el cliente, el restaurante, las mesas disponibles y registra el pago.</p>
+          <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Cliente</label>
-              <select class="form-select form-select-sm" id="resCliente"></select>
+              <label class="form-label">Cliente</label>
+              <select class="form-select" id="resCliente"></select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Restaurante</label>
-              <select class="form-select form-select-sm" id="resPrestador" onchange="filtrarOpcionesPrestador()"></select>
+              <label class="form-label">Restaurante</label>
+              <select class="form-select" id="resPrestador" onchange="filtrarOpcionesPrestador()"></select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Plan gastronómico (opcional)</label>
-              <select class="form-select form-select-sm" id="resPlan"></select>
+              <label class="form-label">Plan gastronómico (opcional)</label>
+              <select class="form-select" id="resPlan"></select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Experiencia (opcional)</label>
-              <select class="form-select form-select-sm" id="resExperiencia"></select>
+              <label class="form-label">Experiencia (opcional)</label>
+              <select class="form-select" id="resExperiencia"></select>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Fecha</label>
-              <input type="date" class="form-control form-control-sm" id="resFecha" value="2026-11-25">
+              <label class="form-label">Fecha de visita</label>
+              <input type="date" class="form-control" id="resFecha" value="2026-11-25">
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Franja</label>
-              <select class="form-select form-select-sm" id="resFranja">
-                <option value="desayuno">desayuno</option>
-                <option value="almuerzo" selected>almuerzo</option>
-                <option value="cena">cena</option>
+              <label class="form-label">Horario</label>
+              <select class="form-select" id="resFranja">
+                <option value="desayuno">Desayuno</option>
+                <option value="almuerzo" selected>Almuerzo</option>
+                <option value="cena">Cena</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Personas</label>
-              <input type="number" class="form-control form-control-sm" id="resComensales" value="14" min="1" onchange="actualizarResumenMesas()">
+              <label class="form-label">Personas</label>
+              <input type="number" class="form-control" id="resComensales" value="14" min="1" onchange="actualizarResumenMesas()">
             </div>
             <div class="col-12">
-              <label class="form-label small fw-semibold d-flex justify-content-between">
-                <span>Mesas a asignar</span>
-                <span class="badge bg-light text-dark border" id="lblCapacidadMesas">0 sillas seleccionadas</span>
-              </label>
-              <div id="resMesasChecks" class="border rounded p-2 bg-light d-flex flex-wrap gap-2" style="max-height:110px;overflow:auto;"></div>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label mb-0">Mesas disponibles</label>
+                <span class="pill-status pill-gray" id="lblCapacidadMesas">0 / 14 sillas</span>
+              </div>
+              <div id="resMesasChecks" class="border rounded-3 p-2 bg-light d-flex flex-wrap gap-2" style="max-height:125px;overflow:auto;"></div>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Canal</label>
-              <select class="form-select form-select-sm" id="resCanal">
-                <option value="web">web</option>
+              <label class="form-label">Canal</label>
+              <select class="form-select" id="resCanal">
+                <option value="web">Web</option>
                 <option value="WhatsApp">WhatsApp</option>
-                <option value="telefono">telefono</option>
-                <option value="presencial">presencial</option>
+                <option value="telefono">Teléfono</option>
+                <option value="presencial">Presencial</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Método de pago</label>
-              <select class="form-select form-select-sm" id="resMetodo">
+              <label class="form-label">Método de pago</label>
+              <select class="form-select" id="resMetodo">
                 <option value="PSE">PSE</option>
-                <option value="tarjeta">tarjeta</option>
-                <option value="transferencia">transferencia</option>
-                <option value="efectivo">efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="efectivo">Efectivo</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Monto ($)</label>
-              <input type="number" class="form-control form-control-sm" id="resMontoPago" value="250000" min="0">
+              <label class="form-label">Valor a pagar ($)</label>
+              <input type="number" class="form-control" id="resMontoPago" value="250000" min="0">
             </div>
           </div>
-          <button class="btn btn-qs btn-sm mt-3 fw-semibold" onclick="crearReserva()">Guardar reserva</button>
+          <button class="btn btn-qs mt-4" onclick="crearReserva()">Guardar reserva</button>
         </div>
       </div>
 
       <div class="col-lg-6">
-        <div class="card p-3 mb-3">
-          <div class="card-title-qs mb-1">Nuevo pedido</div>
-          <p class="text-muted small mb-2">Registra un pedido en mesa, para llevar o a domicilio usando el precio vigente del plato.</p>
-          <div class="row g-2">
+        <div class="card p-4 mb-3">
+          <div class="section-title mb-1">Nuevo pedido</div>
+          <p class="text-muted small mb-3">Toma un pedido en mesa, para llevar o a domicilio con el precio del menú.</p>
+          <div class="row g-3">
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Restaurante</label>
-              <select class="form-select form-select-sm" id="pedPrestador" onchange="filtrarPlatosPedido()"></select>
+              <label class="form-label">Restaurante</label>
+              <select class="form-select" id="pedPrestador" onchange="filtrarPlatosPedido()"></select>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Cliente</label>
-              <select class="form-select form-select-sm" id="pedCliente"></select>
+              <label class="form-label">Cliente</label>
+              <select class="form-select" id="pedCliente"></select>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Modalidad</label>
-              <select class="form-select form-select-sm" id="pedTipo" onchange="toggleCamposPedido()">
-                <option value="en_mesa">en_mesa</option>
-                <option value="para_llevar">para_llevar</option>
-                <option value="domicilio">domicilio</option>
+              <label class="form-label">Modalidad</label>
+              <select class="form-select" id="pedTipo" onchange="toggleCamposPedido()">
+                <option value="en_mesa">En mesa</option>
+                <option value="para_llevar">Para llevar</option>
+                <option value="domicilio">A domicilio</option>
               </select>
             </div>
             <div class="col-md-4" id="boxPedMesa">
-              <label class="form-label small fw-semibold">Mesa</label>
-              <select class="form-select form-select-sm" id="pedMesa"></select>
+              <label class="form-label">Mesa</label>
+              <select class="form-select" id="pedMesa"></select>
             </div>
             <div class="col-md-4 d-none" id="boxPedDom">
-              <label class="form-label small fw-semibold">Domiciliario</label>
-              <select class="form-select form-select-sm" id="pedDomiciliario"></select>
+              <label class="form-label">Domiciliario</label>
+              <select class="form-select" id="pedDomiciliario"></select>
             </div>
             <div class="col-md-8 d-none" id="boxPedDir">
-              <label class="form-label small fw-semibold">Dirección de entrega</label>
-              <input type="text" class="form-control form-control-sm" id="pedDireccion" placeholder="Ej: Finca La Palma km 4 vía Salento">
+              <label class="form-label">Dirección de entrega</label>
+              <input type="text" class="form-control" id="pedDireccion" placeholder="Ej: Finca La Palma km 4 vía Salento">
             </div>
             <div class="col-md-8">
-              <label class="form-label small fw-semibold">Plato</label>
-              <select class="form-select form-select-sm" id="pedPlato"></select>
+              <label class="form-label">Plato</label>
+              <select class="form-select" id="pedPlato"></select>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Cantidad</label>
-              <input type="number" class="form-control form-control-sm" id="pedCantidad" value="2" min="1">
+              <label class="form-label">Cantidad</label>
+              <input type="number" class="form-control" id="pedCantidad" value="2" min="1">
             </div>
           </div>
-          <button class="btn btn-qs btn-sm mt-2 fw-semibold" onclick="crearPedido()">Registrar pedido</button>
+          <button class="btn btn-qs mt-3" onclick="crearPedido()">Registrar pedido</button>
         </div>
 
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <div class="card-title-qs mb-0">Reservas recientes</div>
-            <span class="small text-muted">Cancelación &gt; 5 días: reembolso 80%</span>
+        <div class="card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <div class="section-title mb-0">Reservas recientes</div>
+            <span class="small text-muted">Cancelación con más de 5 días: reembolso del 80%</span>
           </div>
-          <div class="table-responsive" style="max-height:220px;overflow:auto;">
-            <table class="table table-sm table-hover small mb-0">
-              <thead class="table-light"><tr><th>ID</th><th>Cliente</th><th>Servicio</th><th>Pers.</th><th>Estado</th><th>Acción</th></tr></thead>
+          <div class="table-responsive" style="max-height:225px;overflow:auto;">
+            <table class="table table-hover mb-0">
+              <thead><tr><th>ID</th><th>Cliente</th><th>Fecha y horario</th><th>Pers.</th><th>Estado</th><th>Acción</th></tr></thead>
               <tbody id="tbodyReservasRecientes"></tbody>
             </table>
           </div>
@@ -272,49 +435,51 @@
   <div id="tabPerfilNotif" class="tab-pane-custom d-none">
     <div class="row g-3">
       <div class="col-lg-5">
-        <div class="card p-3">
-          <div class="card-title-qs mb-2">Preferencias del cliente</div>
-          <div class="row g-2">
-            <div class="col-md-12">
-              <label class="form-label small fw-semibold">ID de cliente</label>
-              <div class="input-group input-group-sm">
+        <div class="card p-4">
+          <div class="section-title mb-3">Preferencias del cliente</div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">ID del cliente</label>
+              <div class="input-group">
                 <input type="number" class="form-control" id="perfIdCliente" value="1" min="1">
                 <button class="btn btn-outline-secondary" onclick="cargarPerfil()">Buscar</button>
               </div>
             </div>
-            <div class="col-md-6"><label class="form-label small">Teléfono</label><input type="text" class="form-control form-control-sm" id="perfTelefono"></div>
-            <div class="col-md-6"><label class="form-label small">Ciudad de origen</label><input type="text" class="form-control form-control-sm" id="perfCiudad"></div>
-            <div class="col-md-4"><label class="form-label small">Idioma</label>
-              <select class="form-select form-select-sm" id="perfIdioma"><option value="es">es</option><option value="en">en</option><option value="fr">fr</option></select>
+            <div class="col-md-6"><label class="form-label">Teléfono</label><input type="text" class="form-control" id="perfTelefono"></div>
+            <div class="col-md-6"><label class="form-label">Ciudad de origen</label><input type="text" class="form-control" id="perfCiudad"></div>
+            <div class="col-md-4"><label class="form-label">Idioma</label>
+              <select class="form-select" id="perfIdioma"><option value="es">Español (es)</option><option value="en">Inglés (en)</option><option value="fr">Francés (fr)</option></select>
             </div>
-            <div class="col-md-4"><label class="form-label small">Canal preferido</label>
-              <select class="form-select form-select-sm" id="perfCanal"><option value="correo">correo</option><option value="SMS">SMS</option><option value="WhatsApp">WhatsApp</option></select>
+            <div class="col-md-4"><label class="form-label">Canal preferido</label>
+              <select class="form-select" id="perfCanal"><option value="correo">Correo</option><option value="SMS">SMS</option><option value="WhatsApp">WhatsApp</option></select>
             </div>
-            <div class="col-md-4"><label class="form-label small">Recordatorio (h)</label>
-              <select class="form-select form-select-sm" id="perfAnticipacion"><option value="24">24 h (1 día)</option><option value="72">72 h (3 días)</option><option value="168">168 h (7 días)</option></select>
+            <div class="col-md-4"><label class="form-label">Recordatorio</label>
+              <select class="form-select" id="perfAnticipacion"><option value="24">24 horas</option><option value="72">72 horas</option><option value="168">7 días</option></select>
             </div>
-            <div class="col-12 form-check ms-2 mt-2">
-              <input class="form-check-input" type="checkbox" id="perfPromos">
-              <label class="form-check-label small" for="perfPromos">Acepta recibir promociones</label>
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="perfPromos">
+                <label class="form-check-label small" for="perfPromos">Autoriza recibir promociones</label>
+              </div>
             </div>
           </div>
-          <button class="btn btn-qs btn-sm mt-3" onclick="guardarPerfil()">Guardar cambios</button>
+          <button class="btn btn-qs mt-3" onclick="guardarPerfil()">Guardar cambios</button>
         </div>
       </div>
 
       <div class="col-lg-7">
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-            <div class="card-title-qs mb-0">Notificaciones</div>
-            <div class="d-flex gap-1">
-              <input type="text" class="form-control form-control-sm" id="txtPromoMsg" placeholder="Mensaje de promoción..." style="width:230px;">
+        <div class="card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div class="section-title mb-0">Historial de notificaciones</div>
+            <div class="d-flex gap-2">
+              <input type="text" class="form-control" id="txtPromoMsg" placeholder="Escribir promoción..." style="width:220px;">
               <button class="btn btn-outline-secondary btn-sm" onclick="enviarPromocion()">Enviar promoción</button>
               <button class="btn btn-outline-secondary btn-sm" onclick="cargarNotificaciones()">Actualizar</button>
             </div>
           </div>
-          <div class="table-responsive" style="max-height:360px;overflow:auto;">
-            <table class="table table-sm table-striped small">
-              <thead class="table-light"><tr><th>ID</th><th>Cliente</th><th>Tipo</th><th>Canal</th><th>F. Prog.</th><th>Estado</th><th>Mensaje</th></tr></thead>
+          <div class="table-responsive" style="max-height:380px;overflow:auto;">
+            <table class="table table-hover mb-0">
+              <thead><tr><th>ID</th><th>Cliente</th><th>Tipo</th><th>Canal</th><th>Fecha</th><th>Estado</th><th>Mensaje</th></tr></thead>
               <tbody id="tbodyNotificaciones"></tbody>
             </table>
           </div>
@@ -327,18 +492,18 @@
   <div id="tabCrud" class="tab-pane-custom d-none">
     <div class="row g-3">
       <div class="col-lg-3">
-        <div class="card p-2">
-          <div class="fw-semibold small text-muted px-2 pt-1">Núcleo común</div>
-          <div id="listaTablasNucleo" class="mb-2"></div>
-          <div class="fw-semibold small text-muted px-2 pt-1 border-top">Restaurantes</div>
+        <div class="card p-3">
+          <div class="small fw-semibold text-muted text-uppercase px-2 mb-1" style="font-size:.72rem;">Núcleo común</div>
+          <div id="listaTablasNucleo" class="mb-3"></div>
+          <div class="small fw-semibold text-muted text-uppercase px-2 pt-2 border-top mb-1" style="font-size:.72rem;">Restaurantes</div>
           <div id="listaTablasDominio"></div>
         </div>
       </div>
       <div class="col-lg-9">
-        <div class="card p-3 mb-3">
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <div class="card p-4 mb-3">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
             <div>
-              <div class="card-title-qs mb-0">Tabla: <span id="crudTituloTabla" class="text-success">Plato</span></div>
+              <div class="section-title mb-0">Tabla: <span id="crudTituloTabla" class="text-success">Plato</span></div>
               <small class="text-muted" id="crudInfoFk"></small>
             </div>
             <div class="d-flex gap-2 align-items-center">
@@ -346,24 +511,24 @@
                 <input class="form-check-input" type="checkbox" id="chkScopeLocal" onchange="cargarTablaCrud(tablaActual)">
                 <label class="form-check-label" for="chkScopeLocal">Solo mi restaurante</label>
               </div>
-              <input type="text" class="form-control form-control-sm" id="crudBuscar" placeholder="Buscar..." oninput="filtrarDebounced()" style="width:180px;">
+              <input type="text" class="form-control" id="crudBuscar" placeholder="Buscar registro..." oninput="filtrarDebounced()" style="width:200px;">
               <button class="btn btn-outline-secondary btn-sm" onclick="limpiarFormularioCrud()">Limpiar</button>
             </div>
           </div>
-          <form id="crudForm" class="row g-2 border-top pt-2"></form>
-          <div id="boxPlatoEtiquetas" class="mt-2 p-2 bg-light rounded border d-none">
-            <div class="small fw-semibold mb-1">Etiquetas del plato:</div>
-            <div id="checksEtiquetas" class="d-flex flex-wrap gap-3"></div>
+          <form id="crudForm" class="row g-2 border-top pt-3"></form>
+          <div id="boxPlatoEtiquetas" class="mt-3 p-3 bg-light rounded-3 border d-none">
+            <div class="small fw-semibold mb-2">Etiquetas del plato</div>
+            <div id="checksEtiquetas" class="d-flex flex-wrap gap-2"></div>
           </div>
-          <div class="mt-2 d-flex gap-2">
-            <button type="button" class="btn btn-qs btn-sm" onclick="guardarCrud(false)">Guardar nuevo</button>
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="guardarCrud(true)">Actualizar</button>
+          <div class="mt-3 d-flex gap-2">
+            <button type="button" class="btn btn-qs btn-sm px-3" onclick="guardarCrud(false)">Guardar nuevo</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm px-3" onclick="guardarCrud(true)">Actualizar seleccionado</button>
           </div>
         </div>
         <div class="card p-3">
-          <div class="table-responsive" style="max-height:380px;overflow:auto;">
-            <table class="table table-sm table-hover small" id="crudTable">
-              <thead class="table-light" id="crudThead"></thead>
+          <div class="table-responsive" style="max-height:390px;overflow:auto;">
+            <table class="table table-hover mb-0" id="crudTable">
+              <thead id="crudThead"></thead>
               <tbody id="crudTbody"></tbody>
             </table>
           </div>
@@ -376,29 +541,29 @@
   <div id="tabReportes" class="tab-pane-custom d-none">
     <div class="row g-3">
       <div class="col-lg-4">
-        <div class="card p-2">
-          <div class="fw-semibold px-2 pt-2 pb-1 small text-muted">Reportes disponibles</div>
+        <div class="card p-3">
+          <div class="section-title mb-2 px-1" style="font-size:.95rem;">Reportes disponibles</div>
           <div id="listaReportes" class="list-group list-group-flush"></div>
         </div>
       </div>
       <div class="col-lg-8">
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div class="card p-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
             <div>
-              <div class="card-title-qs mb-0" id="repTitulo">Selecciona un reporte</div>
+              <div class="section-title mb-0" id="repTitulo">Selecciona un reporte</div>
               <small class="text-muted" id="repSub"></small>
             </div>
-            <a id="btnDescargarPdf" class="btn btn-outline-danger btn-sm fw-semibold" href="#" target="_blank">Exportar PDF</a>
+            <a id="btnDescargarPdf" class="btn btn-outline-danger btn-sm fw-semibold px-3" href="#" target="_blank">Exportar PDF</a>
           </div>
-          <div id="repFiltros" class="row g-2 mb-2 align-items-end"></div>
-          <details class="mb-2">
+          <div id="repFiltros" class="row g-2 mb-3 align-items-end"></div>
+          <details class="mb-3">
             <summary class="small text-muted" style="cursor:pointer;">Ver consulta SQL</summary>
-            <div class="sql-box mt-1" id="repSql"></div>
+            <div class="sql-box mt-2" id="repSql"></div>
           </details>
-          <div id="boxChart" class="mb-3 d-none" style="max-height:290px;"><canvas id="repChart"></canvas></div>
-          <div class="table-responsive" style="max-height:360px;overflow:auto;">
-            <table class="table table-sm table-striped small">
-              <thead class="table-light" id="repThead"></thead>
+          <div id="boxChart" class="mb-3 d-none" style="max-height:300px;"><canvas id="repChart"></canvas></div>
+          <div class="table-responsive" style="max-height:380px;overflow:auto;">
+            <table class="table table-hover mb-0">
+              <thead id="repThead"></thead>
               <tbody id="repTbody"></tbody>
             </table>
           </div>
@@ -411,43 +576,43 @@
   <div id="tabPlantillas" class="tab-pane-custom d-none">
     <div class="row g-3">
       <div class="col-md-6 col-lg-3">
-        <div class="card p-3 h-100">
-          <span class="small text-muted mb-1">Documento 1</span>
-          <h6 class="fw-semibold">Comprobante de reserva</h6>
-          <p class="small text-muted">Datos del cliente, restaurante, mesas asignadas y estado del pago.</p>
-          <label class="form-label small">ID Reserva</label>
-          <input type="number" class="form-control form-control-sm mb-2" id="plIdReserva" value="502">
-          <button class="btn btn-outline-danger btn-sm mt-auto" onclick="descargarPlantilla('reserva', 'plIdReserva')">Generar PDF</button>
+        <div class="card p-4 h-100">
+          <div class="doc-icon-box"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <div class="section-title mb-1">Comprobante de reserva</div>
+          <p class="small text-muted mb-3">Resumen de la reserva con restaurante, horario, mesas asignadas y pago.</p>
+          <label class="form-label">Número de reserva</label>
+          <input type="number" class="form-control mb-3" id="plIdReserva" value="502">
+          <button class="btn btn-qs btn-sm mt-auto" onclick="descargarPlantilla('reserva', 'plIdReserva')">Descargar PDF</button>
         </div>
       </div>
       <div class="col-md-6 col-lg-3">
-        <div class="card p-3 h-100">
-          <span class="small text-muted mb-1">Documento 2</span>
-          <h6 class="fw-semibold">Comprobante de pago</h6>
-          <p class="small text-muted">Soporte de pago con método, referencia y estado actual.</p>
-          <label class="form-label small">ID Pago</label>
-          <input type="number" class="form-control form-control-sm mb-2" id="plIdPago" value="1">
-          <button class="btn btn-outline-danger btn-sm mt-auto" onclick="descargarPlantilla('pago', 'plIdPago')">Generar PDF</button>
+        <div class="card p-4 h-100">
+          <div class="doc-icon-box"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+          <div class="section-title mb-1">Comprobante de pago</div>
+          <p class="small text-muted mb-3">Soporte de transacción con método de pago, referencia y estado.</p>
+          <label class="form-label">Número de pago</label>
+          <input type="number" class="form-control mb-3" id="plIdPago" value="1">
+          <button class="btn btn-qs btn-sm mt-auto" onclick="descargarPlantilla('pago', 'plIdPago')">Descargar PDF</button>
         </div>
       </div>
       <div class="col-md-6 col-lg-3">
-        <div class="card p-3 h-100">
-          <span class="small text-muted mb-1">Documento 3</span>
-          <h6 class="fw-semibold">Factura de pedido</h6>
-          <p class="small text-muted">Detalle de platos con cantidad y precio cobrado en el pedido.</p>
-          <label class="form-label small">ID Pedido</label>
-          <input type="number" class="form-control form-control-sm mb-2" id="plIdPedido" value="901">
-          <button class="btn btn-outline-danger btn-sm mt-auto" onclick="descargarPlantilla('factura', 'plIdPedido')">Generar PDF</button>
+        <div class="card p-4 h-100">
+          <div class="doc-icon-box"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg></div>
+          <div class="section-title mb-1">Factura de pedido</div>
+          <p class="small text-muted mb-3">Detalle de platos consumidos, cantidades y valores cobrados.</p>
+          <label class="form-label">Número de pedido</label>
+          <input type="number" class="form-control mb-3" id="plIdPedido" value="901">
+          <button class="btn btn-qs btn-sm mt-auto" onclick="descargarPlantilla('factura', 'plIdPedido')">Descargar PDF</button>
         </div>
       </div>
       <div class="col-md-6 col-lg-3">
-        <div class="card p-3 h-100">
-          <span class="small text-muted mb-1">Documento 4</span>
-          <h6 class="fw-semibold">Autorización de datos</h6>
-          <p class="small text-muted">Autorización de tratamiento de datos y promociones del cliente.</p>
-          <label class="form-label small">ID Cliente</label>
-          <input type="number" class="form-control form-control-sm mb-2" id="plIdCliente" value="1">
-          <button class="btn btn-outline-danger btn-sm mt-auto" onclick="descargarPlantilla('autorizacion', 'plIdCliente')">Generar PDF</button>
+        <div class="card p-4 h-100">
+          <div class="doc-icon-box"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div class="section-title mb-1">Autorización de datos</div>
+          <p class="small text-muted mb-3">Consentimiento de tratamiento de datos y envío de promociones.</p>
+          <label class="form-label">ID del cliente</label>
+          <input type="number" class="form-control mb-3" id="plIdCliente" value="1">
+          <button class="btn btn-qs btn-sm mt-auto" onclick="descargarPlantilla('autorizacion', 'plIdCliente')">Descargar PDF</button>
         </div>
       </div>
     </div>
@@ -455,20 +620,21 @@
 
   <!-- TAB 6: CONSULTAS SQL -->
   <div id="tabSql" class="tab-pane-custom d-none">
-    <div class="card p-3">
-      <div class="card-title-qs mb-2">Consultas SQL sobre vistas</div>
-      <div class="d-flex flex-wrap gap-2 mb-2">
+    <div class="card p-4">
+      <div class="section-title mb-1">Consultas SQL</div>
+      <p class="text-muted small mb-3">Ejecuta consultas de solo lectura (`SELECT`) directamente sobre las vistas de la base de datos.</p>
+      <div class="d-flex flex-wrap gap-2 mb-3">
         <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(1)">Reservas con varias mesas</button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(2)">Comparación de precios (Pedido 901)</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(2)">Comparación precios (Pedido 901)</button>
         <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(3)">Detalle de reservas</button>
         <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(4)">Clientes sobre el promedio</button>
         <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(5)">Ingresos por restaurante</button>
       </div>
-      <textarea class="form-control font-monospace small mb-2" id="txtSqlLibre" rows="4">SELECT * FROM vw_Defensa_PrecioHistorico WHERE id_pedido = 901;</textarea>
-      <button class="btn btn-qs btn-sm mb-3" style="width:160px;" onclick="ejecutarSqlLibre()">Ejecutar consulta</button>
+      <textarea class="form-control font-monospace small mb-3" id="txtSqlLibre" rows="4">SELECT * FROM vw_Defensa_PrecioHistorico WHERE id_pedido = 901;</textarea>
+      <button class="btn btn-qs btn-sm mb-3 px-4" style="width:fit-content;" onclick="ejecutarSqlLibre()">Ejecutar consulta</button>
       <div class="table-responsive" style="max-height:360px;overflow:auto;">
-        <table class="table table-sm table-striped small">
-          <thead class="table-light" id="sqlThead"></thead>
+        <table class="table table-hover mb-0">
+          <thead id="sqlThead"></thead>
           <tbody id="sqlTbody"></tbody>
         </table>
       </div>
@@ -478,59 +644,59 @@
 
 <!-- MODAL LOGIN + REGISTRO CLIENTE -->
 <div class="modal fade" id="modalLogin" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header navbar-qs text-white">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 overflow-hidden">
+      <div class="modal-header navbar-qs text-white border-0">
         <h5 class="modal-title fs-6 fw-semibold">QuindíoStay - Acceso al sistema</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body p-4">
         <ul class="nav nav-tabs mb-3">
           <li class="nav-item"><button class="nav-link active" id="tabBtnLogin" onclick="toggleAuthPane(true)">Iniciar sesión</button></li>
-          <li class="nav-item"><button class="nav-link" id="tabBtnReg" onclick="toggleAuthPane(false)">Registrar cliente</button></li>
+          <li class="nav-item"><button class="nav-link" id="tabBtnReg" onclick="toggleAuthPane(false)">Crear cuenta de cliente</button></li>
         </ul>
         <div id="paneLogin">
-          <div class="row g-2">
+          <div class="row g-3">
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Tipo de cuenta</label>
-              <select class="form-select form-select-sm" id="loginTipo">
+              <label class="form-label">Tipo de cuenta</label>
+              <select class="form-select" id="loginTipo">
                 <option value="interno">Personal / Admin</option>
                 <option value="cliente">Cliente</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Usuario o correo</label>
-              <input type="text" class="form-control form-control-sm" id="loginUsuario" value="admin_quindio">
+              <label class="form-label">Usuario o correo</label>
+              <input type="text" class="form-control" id="loginUsuario" value="admin_quindio">
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Contraseña</label>
-              <input type="password" class="form-control form-control-sm" id="loginPass" value="Quindio2026*">
+              <label class="form-label">Contraseña</label>
+              <input type="password" class="form-control" id="loginPass" value="Quindio2026*">
             </div>
           </div>
-          <div class="mt-2 small text-muted">
-            Cuentas de prueba:
+          <div class="mt-3 small text-muted">
+            Cuentas rápidas:
             <button class="btn btn-link btn-sm p-0 me-2" onclick="fillLogin('interno','admin_quindio','Quindio2026*')">Administrador</button>
             <button class="btn btn-link btn-sm p-0 me-2" onclick="fillLogin('interno','encargado_cocora','Quindio2026*')">Encargado</button>
             <button class="btn btn-link btn-sm p-0 me-2" onclick="fillLogin('interno','operador_salento','Quindio2026*')">Operador</button>
             <button class="btn btn-link btn-sm p-0" onclick="fillLogin('cliente','valentina.arango1@correo.com','Cliente2026*')">Cliente</button>
           </div>
-          <button class="btn btn-qs btn-sm mt-3" onclick="iniciarSesion()">Entrar</button>
+          <button class="btn btn-qs mt-3 px-4" onclick="iniciarSesion()">Entrar</button>
         </div>
 
         <div id="paneRegistro" class="d-none">
           <div class="row g-2">
-            <div class="col-md-3"><label class="form-label small">Tipo doc</label><select class="form-select form-select-sm" id="regTipoDoc"><option>CC</option><option>CE</option><option>PA</option><option>TI</option></select></div>
-            <div class="col-md-3"><label class="form-label small">Número doc</label><input class="form-control form-control-sm" id="regNumDoc" placeholder="1094999888"></div>
-            <div class="col-md-3"><label class="form-label small">Nombres</label><input class="form-control form-control-sm" id="regNombres"></div>
-            <div class="col-md-3"><label class="form-label small">Apellidos</label><input class="form-control form-control-sm" id="regApellidos"></div>
-            <div class="col-md-4"><label class="form-label small">Correo</label><input type="email" class="form-control form-control-sm" id="regCorreo"></div>
-            <div class="col-md-4"><label class="form-label small">Teléfono</label><input class="form-control form-control-sm" id="regTelefono" value="3150001122"></div>
-            <div class="col-md-4"><label class="form-label small">Fecha nacimiento</label><input type="date" class="form-control form-control-sm" id="regNac" value="1999-04-12"></div>
-            <div class="col-md-4"><label class="form-label small">Ciudad origen</label><input class="form-control form-control-sm" id="regCiudad" value="Bogotá"></div>
-            <div class="col-md-4"><label class="form-label small">Contraseña</label><input type="password" class="form-control form-control-sm" id="regClave" value="Cliente2026*"></div>
-            <div class="col-md-4"><label class="form-label small">Canal avisos</label><select class="form-select form-select-sm" id="regCanal"><option value="correo">correo</option><option value="WhatsApp">WhatsApp</option><option value="SMS">SMS</option></select></div>
+            <div class="col-md-3"><label class="form-label">Tipo doc</label><select class="form-select" id="regTipoDoc"><option>CC</option><option>CE</option><option>PA</option><option>TI</option></select></div>
+            <div class="col-md-3"><label class="form-label">Número doc</label><input class="form-control" id="regNumDoc" placeholder="1094999888"></div>
+            <div class="col-md-3"><label class="form-label">Nombres</label><input class="form-control" id="regNombres"></div>
+            <div class="col-md-3"><label class="form-label">Apellidos</label><input class="form-control" id="regApellidos"></div>
+            <div class="col-md-4"><label class="form-label">Correo</label><input type="email" class="form-control" id="regCorreo"></div>
+            <div class="col-md-4"><label class="form-label">Teléfono</label><input class="form-control" id="regTelefono" value="3150001122"></div>
+            <div class="col-md-4"><label class="form-label">Fecha nacimiento</label><input type="date" class="form-control" id="regNac" value="1999-04-12"></div>
+            <div class="col-md-4"><label class="form-label">Ciudad origen</label><input class="form-control" id="regCiudad" value="Bogotá"></div>
+            <div class="col-md-4"><label class="form-label">Contraseña</label><input type="password" class="form-control" id="regClave" value="Cliente2026*"></div>
+            <div class="col-md-4"><label class="form-label">Canal avisos</label><select class="form-select" id="regCanal"><option value="correo">Correo</option><option value="WhatsApp">WhatsApp</option><option value="SMS">SMS</option></select></div>
           </div>
-          <button class="btn btn-qs btn-sm mt-3" onclick="registrarCliente()">Crear cuenta</button>
+          <button class="btn btn-qs mt-3 px-4" onclick="registrarCliente()">Crear cuenta</button>
         </div>
       </div>
     </div>
@@ -550,9 +716,22 @@ let chartInst = null;
 let filtroTimer = null;
 let modalLoginBs = null;
 
+function pillEstado(est) {
+  const e = String(est || '').toLowerCase();
+  if (['completada','entregado','aprobado','enviada','disponible','activo'].includes(e)) return `<span class="pill-status pill-ok">${est}</span>`;
+  if (['confirmada','en_curso','en_ruta'].includes(e)) return `<span class="pill-status pill-info">${est}</span>`;
+  if (['pendiente','reembolsado_80','en_preparacion'].includes(e)) return `<span class="pill-status pill-warn">${est}</span>`;
+  if (['cancelada','cancelado','rechazado','retenido','fallida'].includes(e)) return `<span class="pill-status pill-bad">${est}</span>`;
+  return `<span class="pill-status pill-gray">${est}</span>`;
+}
+
+function bonitoCol(col) {
+  return String(col || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
 function mostrarAlerta(msg, tipo='success') {
   const box = document.getElementById('alertGlobal');
-  box.className = `alert alert-${tipo} alert-dismissible fade show`;
+  box.className = `alert alert-${tipo} alert-dismissible fade show rounded-3`;
   document.getElementById('alertGlobalMsg').textContent = msg;
   box.classList.remove('d-none');
 }
@@ -633,9 +812,9 @@ async function registrarCliente() {
 
 async function refrescarSesion() {
   const s = await fetch('/api/sesion').then(r => r.json());
-  document.getElementById('badgeMotor').textContent = (s.motor || 'sqlite').toUpperCase();
+  document.getElementById('badgeMotor').textContent = (s.motor || 'mysql').toUpperCase();
   if (s.autenticado) {
-    document.getElementById('lblUsuario').textContent = `${s.nombre} (${s.rol})`;
+    document.getElementById('lblUsuario').textContent = `${s.nombre} · ${s.rol}`;
     document.getElementById('lblRol').textContent = s.restaurante || '';
     document.getElementById('btnLogout').classList.remove('d-none');
     if (s.idCliente) document.getElementById('perfIdCliente').value = s.idCliente;
@@ -658,8 +837,8 @@ async function cargarCatalogo() {
       sel.appendChild(o);
     });
   };
-  fillSel('resCliente', catalogo.clientes, c => `#${c.id_cliente} ${c.nombre}`, 'id_cliente');
-  fillSel('pedCliente', catalogo.clientes, c => `#${c.id_cliente} ${c.nombre}`, 'id_cliente', '(Mostrador)');
+  fillSel('resCliente', catalogo.clientes, c => c.nombre, 'id_cliente');
+  fillSel('pedCliente', catalogo.clientes, c => c.nombre, 'id_cliente', 'Cliente en mostrador');
   fillSel('resPrestador', catalogo.prestadores, p => `${p.nombre_comercial} (${p.municipio})`, 'id_prestador');
   fillSel('pedPrestador', catalogo.prestadores, p => `${p.nombre_comercial}`, 'id_prestador');
   filtrarOpcionesPrestador();
@@ -669,8 +848,8 @@ async function cargarCatalogo() {
   tb.innerHTML = '';
   (catalogo.reservasRecientes || []).forEach(r => {
     const btnCanc = (r.estado !== 'cancelada' && r.estado !== 'completada')
-      ? `<button class="btn btn-outline-danger btn-sm py-0" onclick="cancelarReserva(${r.id_reserva})">Cancelar</button>` : '-';
-    tb.innerHTML += `<tr><td>${r.id_reserva}</td><td>${r.cliente}</td><td>${r.fecha_servicio} (${r.franja_horaria})</td><td>${r.numero_comensales}</td><td><span class="badge bg-secondary">${r.estado}</span></td><td>${btnCanc}</td></tr>`;
+      ? `<button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="cancelarReserva(${r.id_reserva})">Cancelar</button>` : '-';
+    tb.innerHTML += `<tr><td>${r.id_reserva}</td><td>${r.cliente}</td><td>${r.fecha_servicio} (${r.franja_horaria})</td><td>${r.numero_comensales}</td><td>${pillEstado(r.estado)}</td><td>${btnCanc}</td></tr>`;
   });
 }
 
@@ -680,18 +859,18 @@ function filtrarOpcionesPrestador() {
   const exps = (catalogo.experiencias || []).filter(e => Number(e.id_prestador) === idP);
   const mesas = (catalogo.mesas || []).filter(m => Number(m.id_prestador) === idP);
 
-  document.getElementById('resPlan').innerHTML = '<option value="">(Ninguno)</option>' +
-    planes.map(p => `<option value="${p.id_plan}">${p.nombre} ($${Number(p.precio).toLocaleString()}) [${p.fecha_inicio_vigencia}..${p.fecha_fin_vigencia}]</option>`).join('');
+  document.getElementById('resPlan').innerHTML = '<option value="">Ninguno</option>' +
+    planes.map(p => `<option value="${p.id_plan}">${p.nombre} ($${Number(p.precio).toLocaleString()})</option>`).join('');
   if (planes.length) document.getElementById('resPlan').value = planes[0].id_plan;
 
-  document.getElementById('resExperiencia').innerHTML = '<option value="">(Ninguna)</option>' +
+  document.getElementById('resExperiencia').innerHTML = '<option value="">Ninguna</option>' +
     exps.map(e => `<option value="${e.id_experiencia}">${e.nombre_experiencia} ($${Number(e.precio_persona).toLocaleString()}/p)</option>`).join('');
 
   const box = document.getElementById('resMesasChecks');
   box.innerHTML = mesas.map(m =>
-    `<label class="form-check form-check-inline small m-0">
-      <input type="checkbox" class="form-check-input chk-mesa" value="${m.id_mesa}" data-cap="${m.capacidad}" onchange="actualizarResumenMesas()">
-      <span>Mesa #${m.numero_mesa} (${m.capacidad}p - ${m.zona})</span>
+    `<label class="mesa-chip">
+      <input type="checkbox" class="form-check-input m-0 chk-mesa" value="${m.id_mesa}" data-cap="${m.capacidad}" onchange="actualizarResumenMesas()">
+      <span>Mesa #${m.numero_mesa} · ${m.capacidad}p (${m.zona})</span>
     </label>`
   ).join('');
   actualizarResumenMesas();
@@ -702,8 +881,8 @@ function actualizarResumenMesas() {
   let sum = 0;
   document.querySelectorAll('.chk-mesa:checked').forEach(c => sum += Number(c.dataset.cap));
   const lbl = document.getElementById('lblCapacidadMesas');
-  lbl.textContent = `${sum} sillas / ${com} personas`;
-  lbl.className = sum >= com ? 'badge bg-success' : 'badge bg-light text-dark border';
+  lbl.textContent = `${sum} / ${com} sillas`;
+  lbl.className = sum >= com ? 'pill-status pill-ok' : 'pill-status pill-warn';
 }
 
 function filtrarPlatosPedido() {
@@ -711,7 +890,7 @@ function filtrarPlatosPedido() {
   const platos = (catalogo.platos || []).filter(p => Number(p.id_prestador) === idP);
   const mesas = (catalogo.mesas || []).filter(m => Number(m.id_prestador) === idP);
   const doms = (catalogo.domiciliarios || []).filter(d => Number(d.id_prestador) === idP);
-  document.getElementById('pedPlato').innerHTML = platos.map(p => `<option value="${p.id_plato}">${p.nombre_plato} ($${Number(p.precio_actual).toLocaleString()})</option>`).join('');
+  document.getElementById('pedPlato').innerHTML = platos.map(p => `<option value="${p.id_plato}">${p.nombre_plato} - $${Number(p.precio_actual).toLocaleString()}</option>`).join('');
   document.getElementById('pedMesa').innerHTML = mesas.map(m => `<option value="${m.id_mesa}">Mesa #${m.numero_mesa} (${m.zona})</option>`).join('');
   document.getElementById('pedDomiciliario').innerHTML = doms.map(d => `<option value="${d.id_domiciliario}">${d.nombre} (${d.tipo_vehiculo})</option>`).join('');
 }
@@ -741,6 +920,7 @@ async function crearReserva() {
     const res = await api('/api/reservas/crear', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     mostrarAlerta(res.mensaje);
     await cargarCatalogo();
+    await cargarResumenSidebar();
   } catch (e) { mostrarAlerta(e.message, 'danger'); }
 }
 
@@ -765,6 +945,7 @@ async function crearPedido() {
     };
     const res = await api('/api/pedidos/crear', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     mostrarAlerta(res.mensaje);
+    await cargarResumenSidebar();
   } catch (e) { mostrarAlerta(e.message, 'danger'); }
 }
 
@@ -801,7 +982,7 @@ async function guardarPerfil() {
 async function cargarNotificaciones() {
   const res = await api('/api/notificaciones');
   document.getElementById('tbodyNotificaciones').innerHTML = (res.filas || []).map(n =>
-    `<tr><td>${n.id_notificacion}</td><td>${n.cliente}</td><td><span class="badge bg-light text-dark border">${n.tipo}</span></td><td>${n.canal}</td><td>${n.fecha_programada}</td><td><span class="badge bg-secondary">${n.estado}</span></td><td>${n.mensaje}</td></tr>`
+    `<tr><td>${n.id_notificacion}</td><td>${n.cliente}</td><td><span class="pill-status pill-info">${n.tipo}</span></td><td>${n.canal}</td><td>${n.fecha_programada}</td><td>${pillEstado(n.estado)}</td><td>${n.mensaje}</td></tr>`
   ).join('');
 }
 
@@ -818,10 +999,14 @@ async function cargarResumenSidebar() {
   const res = await api('/api/resumen');
   const map = {};
   (res.conteos || []).forEach(c => map[c.tabla] = c.filas);
+  document.getElementById('kpiPrestadores').textContent = map['Prestador'] ?? '-';
+  document.getElementById('kpiReservas').textContent = map['Reserva'] ?? '-';
+  document.getElementById('kpiPlatos').textContent = map['Plato'] ?? '-';
+  document.getElementById('kpiPedidos').textContent = map['Pedido'] ?? '-';
   const renderGrupo = (id, list) => {
     document.getElementById(id).innerHTML = list.map(t =>
       `<button class="table-sidebar-btn ${t===tablaActual?'active':''}" onclick="cargarTablaCrud('${t}')">
-        <span>${t}</span><span class="badge bg-secondary">${map[t]??0}</span>
+        <span>${t}</span><span class="badge bg-light text-dark border">${map[t]??0}</span>
       </button>`
     ).join('');
   };
@@ -843,8 +1028,8 @@ async function cargarTablaCrud(tabla) {
 
   document.getElementById('crudForm').innerHTML = metaColumnas.map(c =>
     `<div class="col-md-3">
-      <label class="form-label small fw-semibold mb-0">${c.name}${c.pk?' (PK)':''}</label>
-      <input type="text" class="form-control form-control-sm" id="fld_${c.name}" placeholder="${c.type}">
+      <label class="form-label mb-0">${bonitoCol(c.name)}${c.pk?' *':''}</label>
+      <input type="text" class="form-control" id="fld_${c.name}" placeholder="${c.type}">
     </div>`
   ).join('');
 
@@ -852,13 +1037,13 @@ async function cargarTablaCrud(tabla) {
   document.getElementById('boxPlatoEtiquetas').classList.toggle('d-none', !esPlato);
   if (esPlato) cargarEtiquetasPlato(0);
 
-  document.getElementById('crudThead').innerHTML = '<tr>' + metaColumnas.map(c => `<th>${c.name}</th>`).join('') + '<th>Acciones</th></tr>';
+  document.getElementById('crudThead').innerHTML = '<tr>' + metaColumnas.map(c => `<th>${bonitoCol(c.name)}</th>`).join('') + '<th>Acciones</th></tr>';
   document.getElementById('crudTbody').innerHTML = (data.filas || []).map(r => {
     const jsonRow = encodeURIComponent(JSON.stringify(r));
     return `<tr>${metaColumnas.map(c => `<td>${r[c.name] ?? ''}</td>`).join('')}
       <td class="text-nowrap">
-        <button class="btn btn-outline-secondary btn-sm py-0" onclick="editarFila('${jsonRow}')">Editar</button>
-        <button class="btn btn-outline-danger btn-sm py-0" onclick="eliminarFila('${jsonRow}')">Eliminar</button>
+        <button class="btn btn-outline-secondary btn-sm py-0 px-2" onclick="editarFila('${jsonRow}')">Editar</button>
+        <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="eliminarFila('${jsonRow}')">Eliminar</button>
       </td></tr>`;
   }).join('');
 }
@@ -881,8 +1066,8 @@ async function cargarEtiquetasPlato(idPlato) {
   const res = await api('/api/plato/etiquetas?id_plato=' + idPlato);
   const set = new Set(res.asignadas || []);
   document.getElementById('checksEtiquetas').innerHTML = (res.todas || []).map(e =>
-    `<label class="form-check form-check-inline small m-0">
-      <input type="checkbox" class="form-check-input chk-etiq" value="${e.id_etiqueta}" ${set.has(e.id_etiqueta)?'checked':''}>
+    `<label class="mesa-chip">
+      <input type="checkbox" class="form-check-input m-0 chk-etiq" value="${e.id_etiqueta}" ${set.has(e.id_etiqueta)?'checked':''}>
       <span>${e.nombre_etiqueta}</span>
     </label>`
   ).join('');
@@ -929,11 +1114,11 @@ async function cargarListaReportes() {
   const res = await api('/api/reportes');
   document.getElementById('listaReportes').innerHTML = (res.reportes || []).map(r =>
     `<button class="list-group-item list-group-item-action ${r.codigo===reporteActual?'active':''}" onclick="cargarReporte('${r.codigo}')">
-      <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex justify-content-between align-items-center mb-1">
         <strong>${r.codigo}</strong>
         <span class="badge bg-light text-dark border badge-lvl">${r.nivel.split(' ')[0]}</span>
       </div>
-      <div class="small">${r.titulo}</div>
+      <div class="small ${r.codigo===reporteActual?'':'text-muted'}">${r.titulo}</div>
     </button>`
   ).join('');
 }
@@ -941,23 +1126,23 @@ async function cargarListaReportes() {
 function construirFiltrosReporte(cod) {
   const box = document.getElementById('repFiltros');
   if (cod === 'R-01') {
-    box.innerHTML = `<div class="col-md-4"><label class="form-label small">Precio mínimo</label><input id="fMinP" type="number" class="form-control form-control-sm" value="15000"></div>
-      <div class="col-md-4"><label class="form-label small">Precio máximo</label><input id="fMaxP" type="number" class="form-control form-control-sm" value="50000"></div>
-      <div class="col-md-4"><button class="btn btn-qs btn-sm" onclick="cargarReporte('R-01', true)">Consultar</button></div>`;
+    box.innerHTML = `<div class="col-md-4"><label class="form-label">Precio mínimo</label><input id="fMinP" type="number" class="form-control" value="15000"></div>
+      <div class="col-md-4"><label class="form-label">Precio máximo</label><input id="fMaxP" type="number" class="form-control" value="50000"></div>
+      <div class="col-md-4"><button class="btn btn-qs" onclick="cargarReporte('R-01', true)">Consultar</button></div>`;
   } else if (cod === 'R-02') {
-    box.innerHTML = `<div class="col-md-5"><label class="form-label small">Zona</label><select id="fZona" class="form-select form-select-sm"><option value="">Todas</option><option>salon</option><option>terraza</option><option>mirador</option><option>barra</option></select></div>
-      <div class="col-md-4"><button class="btn btn-qs btn-sm" onclick="cargarReporte('R-02', true)">Consultar</button></div>`;
+    box.innerHTML = `<div class="col-md-5"><label class="form-label">Zona</label><select id="fZona" class="form-select"><option value="">Todas</option><option>salon</option><option>terraza</option><option>mirador</option><option>barra</option></select></div>
+      <div class="col-md-4"><button class="btn btn-qs" onclick="cargarReporte('R-02', true)">Consultar</button></div>`;
   } else if (cod === 'R-03') {
-    box.innerHTML = `<div class="col-md-5"><label class="form-label small">Vehículo</label><select id="fVeh" class="form-select form-select-sm"><option value="">Todos</option><option>motocicleta</option><option>bicicleta</option><option>automovil</option></select></div>
-      <div class="col-md-4"><button class="btn btn-qs btn-sm" onclick="cargarReporte('R-03', true)">Consultar</button></div>`;
+    box.innerHTML = `<div class="col-md-5"><label class="form-label">Vehículo</label><select id="fVeh" class="form-select"><option value="">Todos</option><option>motocicleta</option><option>bicicleta</option><option>automovil</option></select></div>
+      <div class="col-md-4"><button class="btn btn-qs" onclick="cargarReporte('R-03', true)">Consultar</button></div>`;
   } else if (cod === 'R-04') {
-    box.innerHTML = `<div class="col-md-3"><label class="form-label small">Desde</label><input id="fDesde" type="date" class="form-control form-control-sm" value="2025-01-01"></div>
-      <div class="col-md-3"><label class="form-label small">Hasta</label><input id="fHasta" type="date" class="form-control form-control-sm" value="2027-12-31"></div>
-      <div class="col-md-3"><label class="form-label small">Mín. unidades</label><input id="fMinC" type="number" class="form-control form-control-sm" value="15"></div>
-      <div class="col-md-3"><button class="btn btn-qs btn-sm" onclick="cargarReporte('R-04', true)">Consultar</button></div>`;
+    box.innerHTML = `<div class="col-md-3"><label class="form-label">Desde</label><input id="fDesde" type="date" class="form-control" value="2025-01-01"></div>
+      <div class="col-md-3"><label class="form-label">Hasta</label><input id="fHasta" type="date" class="form-control" value="2027-12-31"></div>
+      <div class="col-md-3"><label class="form-label">Mín. unidades</label><input id="fMinC" type="number" class="form-control" value="15"></div>
+      <div class="col-md-3"><button class="btn btn-qs" onclick="cargarReporte('R-04', true)">Consultar</button></div>`;
   } else if (cod === 'R-05') {
-    box.innerHTML = `<div class="col-md-5"><label class="form-label small">Franja</label><select id="fFranja" class="form-select form-select-sm"><option value="">Todas</option><option>desayuno</option><option>almuerzo</option><option>cena</option></select></div>
-      <div class="col-md-4"><button class="btn btn-qs btn-sm" onclick="cargarReporte('R-05', true)">Consultar</button></div>`;
+    box.innerHTML = `<div class="col-md-5"><label class="form-label">Franja</label><select id="fFranja" class="form-select"><option value="">Todas</option><option>desayuno</option><option>almuerzo</option><option>cena</option></select></div>
+      <div class="col-md-4"><button class="btn btn-qs" onclick="cargarReporte('R-05', true)">Consultar</button></div>`;
   } else {
     box.innerHTML = '';
   }
@@ -979,7 +1164,7 @@ async function cargarReporte(cod, desdeBtn=false) {
   document.getElementById('btnDescargarPdf').href = '/api/reporte/pdf?' + qs.toString();
   const res = await api('/api/reporte?' + qs.toString());
   document.getElementById('repTitulo').textContent = res.titulo;
-  document.getElementById('repSub').textContent = `${res.nivel} | Vista: ${res.vistaSql} | ${res.filas.length} filas`;
+  document.getElementById('repSub').textContent = `${res.nivel} | ${res.filas.length} resultados`;
   document.getElementById('repSql').textContent = res.sql;
   renderTabla('repThead', 'repTbody', res.columnas, res.filas);
   renderChartReporte(cod, res.filas);
@@ -995,14 +1180,14 @@ function renderChartReporte(cod, filas) {
   const ctx = document.getElementById('repChart').getContext('2d');
   if (cod === 'R-04') {
     const top = filas.slice(0, 8);
-    chartInst = new Chart(ctx, { type:'bar', data:{ labels: top.map(r=>r.nombre_plato), datasets:[{ label:'Ingresos ($)', data: top.map(r=>r.ingresos_historicos), backgroundColor:'#1f4d3a' }] }, options:{ indexAxis:'y', responsive:true } });
+    chartInst = new Chart(ctx, { type:'bar', data:{ labels: top.map(r=>r.nombre_plato), datasets:[{ label:'Ingresos ($)', data: top.map(r=>r.ingresos_historicos), backgroundColor:'#1b4332', borderRadius: 5 }] }, options:{ indexAxis:'y', responsive:true } });
   } else if (cod === 'R-05') {
     const top = filas.slice(0, 10);
-    chartInst = new Chart(ctx, { type:'bar', data:{ labels: top.map(r=>`${r.nombre_comercial.substring(0,18)} (${r.dia_semana} ${r.franja_horaria})`), datasets:[{ label:'Comensales', data: top.map(r=>r.total_comensales), backgroundColor:'#2c6e91' }] }, options:{ responsive:true } });
+    chartInst = new Chart(ctx, { type:'bar', data:{ labels: top.map(r=>`${r.nombre_comercial.substring(0,18)} (${r.dia_semana} ${r.franja_horaria})`), datasets:[{ label:'Comensales', data: top.map(r=>r.total_comensales), backgroundColor:'#2d6a4f', borderRadius: 5 }] }, options:{ responsive:true } });
   } else if (cod === 'R-06') {
     const mapMod = {};
     filas.forEach(r => mapMod[r.tipo_pedido] = (mapMod[r.tipo_pedido] || 0) + Number(r.recaudo_total));
-    chartInst = new Chart(ctx, { type:'doughnut', data:{ labels: Object.keys(mapMod), datasets:[{ data: Object.values(mapMod), backgroundColor:['#1f4d3a','#2c6e91','#b45309'] }] }, options:{ responsive:true, maintainAspectRatio:false } });
+    chartInst = new Chart(ctx, { type:'doughnut', data:{ labels: Object.keys(mapMod).map(bonitoCol), datasets:[{ data: Object.values(mapMod), backgroundColor:['#1b4332','#2d6a4f','#d97706'] }] }, options:{ responsive:true, maintainAspectRatio:false } });
   }
 }
 
@@ -1032,7 +1217,7 @@ async function ejecutarSqlLibre() {
 }
 
 function renderTabla(theadId, tbodyId, cols, rows) {
-  document.getElementById(theadId).innerHTML = '<tr>' + (cols||[]).map(c => `<th>${c}</th>`).join('') + '</tr>';
+  document.getElementById(theadId).innerHTML = '<tr>' + (cols||[]).map(c => `<th>${bonitoCol(c)}</th>`).join('') + '</tr>';
   document.getElementById(tbodyId).innerHTML = (rows||[]).map(r =>
     '<tr>' + (cols||[]).map(c => `<td>${r[c] ?? ''}</td>`).join('') + '</tr>'
   ).join('');

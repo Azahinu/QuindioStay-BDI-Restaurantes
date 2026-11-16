@@ -9,6 +9,6 @@
      `sql/oracle/01_DDL_QuindioStay.sql` -> `sql/oracle/02_DML_QuindioStay.sql` -> `sql/oracle/03_Vistas_y_Reportes_QuindioStay.sql`
 
 2. Ejecución del sistema en Java 21:
-   - Dar doble clic en `INICIAR_SISTEMA.bat` (compila si falta la carpeta `out` y levanta el servidor local).
-   - Por defecto usa `db.engine=sqlite` con `data/quindiostay.db` y abre en `http://localhost:8080`.
-   - Para conectar a MySQL o SQL Server, editar `config.properties` (`db.engine=mysql` o `sqlserver`).
+   - Por defecto `config.properties` conecta directamente a MySQL 8 (`db.engine=mysql`, base `QuindioStay`).
+   - Dar doble clic en `INICIAR_SISTEMA.bat` (compila si falta la carpeta `out` y levanta el servidor en `http://localhost:8080`).
+   - Si se desea probar sin servidor externo o con SQL Server, editar `db.engine=sqlite` o `sqlserver` en `config.properties`.
