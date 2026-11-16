@@ -45,22 +45,25 @@ DROP TABLE IF EXISTS Municipio ;
 -- 1. Tabla Municipio: guarda los 12 municipios del departamento del Quindio.
 --    codigo_dane es CHAR(5) porque no se hacen calculos con el y mide siempre 5.
 CREATE TABLE Municipio (
-    codigo_dane CHAR(5)      CONSTRAINT pk_municipio PRIMARY KEY,
+    codigo_dane CHAR(5)     NOT NULL,
     nombre      VARCHAR(80) NOT NULL,
+    CONSTRAINT pk_municipio        PRIMARY KEY (codigo_dane),
     CONSTRAINT uq_municipio_nombre UNIQUE (nombre)
 );
 
 -- 2. Tabla TipoPrestador: catalogo de categorias de prestadores turisticos.
 CREATE TABLE TipoPrestador (
-    id_tipo_prestador INT    CONSTRAINT pk_tipoprestador PRIMARY KEY,
+    id_tipo_prestador INT         NOT NULL,
     nombre_tipo       VARCHAR(60) NOT NULL,
+    CONSTRAINT pk_tipoprestador        PRIMARY KEY (id_tipo_prestador),
     CONSTRAINT uq_tipoprestador_nombre UNIQUE (nombre_tipo)
 );
 
 -- 3. Tabla Rol: roles permitidos dentro de la plataforma QuindioStay.
 CREATE TABLE Rol (
-    id_rol     INT    CONSTRAINT pk_rol PRIMARY KEY,
+    id_rol     INT         NOT NULL,
     nombre_rol VARCHAR(50) NOT NULL,
+    CONSTRAINT pk_rol        PRIMARY KEY (id_rol),
     CONSTRAINT uq_rol_nombre UNIQUE (nombre_rol),
     CONSTRAINT ck_rol_nombre CHECK (nombre_rol IN ('administrador', 'encargado', 'operador', 'cliente'))
 );
@@ -68,15 +71,16 @@ CREATE TABLE Rol (
 -- 4. Tabla Cliente: turistas y comensales registrados en la plataforma.
 --    Clave alterna compuesta en (tipo_documento, numero_documento) y en correo.
 CREATE TABLE Cliente (
-    id_cliente       INT    CONSTRAINT pk_cliente PRIMARY KEY,
+    id_cliente       INT          NOT NULL,
     tipo_documento   VARCHAR(10)  NOT NULL,
     numero_documento VARCHAR(25)  NOT NULL,
     nombres          VARCHAR(80)  NOT NULL,
     apellidos        VARCHAR(80)  NOT NULL,
     correo           VARCHAR(100) NOT NULL,
     telefono         VARCHAR(20)  NOT NULL,
-    fecha_nacimiento DATE          NOT NULL,
+    fecha_nacimiento DATE         NOT NULL,
     ciudad_origen    VARCHAR(80),
+    CONSTRAINT pk_cliente           PRIMARY KEY (id_cliente),
     CONSTRAINT uq_cliente_documento UNIQUE (tipo_documento, numero_documento),
     CONSTRAINT uq_cliente_correo    UNIQUE (correo),
     CONSTRAINT ck_cliente_tipodoc   CHECK (tipo_documento IN ('CC', 'CE', 'PA', 'TI', 'NIT'))
@@ -84,16 +88,18 @@ CREATE TABLE Cliente (
 
 -- 5. Tabla CategoriaPlato: secciones de la carta gastronomica.
 CREATE TABLE CategoriaPlato (
-    id_categoria     INT     CONSTRAINT pk_categoriaplato PRIMARY KEY,
+    id_categoria     INT          NOT NULL,
     nombre_categoria VARCHAR(60)  NOT NULL,
     descripcion      VARCHAR(200),
+    CONSTRAINT pk_categoriaplato        PRIMARY KEY (id_categoria),
     CONSTRAINT uq_categoriaplato_nombre UNIQUE (nombre_categoria)
 );
 
 -- 6. Tabla Etiqueta: etiquetas dietarias y culinarias (vegano, sin gluten, etc.).
 CREATE TABLE Etiqueta (
-    id_etiqueta     INT    CONSTRAINT pk_etiqueta PRIMARY KEY,
+    id_etiqueta     INT         NOT NULL,
     nombre_etiqueta VARCHAR(50) NOT NULL,
+    CONSTRAINT pk_etiqueta        PRIMARY KEY (id_etiqueta),
     CONSTRAINT uq_etiqueta_nombre UNIQUE (nombre_etiqueta)
 );
 
@@ -104,17 +110,18 @@ CREATE TABLE Etiqueta (
 -- 7. Tabla Prestador: restaurantes y operadores registrados en el Quindio.
 --    Sus foraneas hacia Municipio y TipoPrestador usan RESTRICT (sin ON DELETE).
 CREATE TABLE Prestador (
-    id_prestador               INT     CONSTRAINT pk_prestador PRIMARY KEY,
+    id_prestador               INT           NOT NULL,
     codigo_dane                CHAR(5)       NOT NULL,
-    id_tipo_prestador          INT     NOT NULL,
-    nit_documento              VARCHAR(20)  NOT NULL,
-    nombre_comercial           VARCHAR(120) NOT NULL,
+    id_tipo_prestador          INT           NOT NULL,
+    nit_documento              VARCHAR(20)   NOT NULL,
+    nombre_comercial           VARCHAR(120)  NOT NULL,
     rnt                        VARCHAR(30),
-    direccion                  VARCHAR(150) NOT NULL,
-    telefono                   VARCHAR(20)  NOT NULL,
-    correo                     VARCHAR(100) NOT NULL,
-    estado                     VARCHAR(15)  DEFAULT 'activo' NOT NULL,
-    distancia_max_domicilio_km DECIMAL(5,2)   DEFAULT 0 NOT NULL,
+    direccion                  VARCHAR(150)  NOT NULL,
+    telefono                   VARCHAR(20)   NOT NULL,
+    correo                     VARCHAR(100)  NOT NULL,
+    estado                     VARCHAR(15)   DEFAULT 'activo' NOT NULL,
+    distancia_max_domicilio_km DECIMAL(5,2)  DEFAULT 0 NOT NULL,
+    CONSTRAINT pk_prestador           PRIMARY KEY (id_prestador),
     CONSTRAINT uq_prestador_nit       UNIQUE (nit_documento),
     CONSTRAINT ck_prestador_estado    CHECK (estado IN ('activo', 'inactivo', 'suspendido')),
     CONSTRAINT ck_prestador_distancia CHECK (distancia_max_domicilio_km >= 0),
@@ -125,12 +132,13 @@ CREATE TABLE Prestador (
 -- 8. Tabla PerfilCliente: entidad debil 1:1 con Cliente para cuenta y preferencias.
 --    Usa ON DELETE CASCADE porque el perfil no tiene sentido sin el cliente.
 CREATE TABLE PerfilCliente (
-    id_cliente                INT    CONSTRAINT pk_perfilcliente PRIMARY KEY,
+    id_cliente                INT          NOT NULL,
     contrasena_hash           VARCHAR(255) NOT NULL,
     idioma                    VARCHAR(5)   DEFAULT 'es' NOT NULL,
     canal_preferido           VARCHAR(15)  DEFAULT 'correo' NOT NULL,
-    anticipacion_recordatorio INT     DEFAULT 24 NOT NULL,
-    acepta_promociones        INT     DEFAULT 1 NOT NULL,
+    anticipacion_recordatorio INT          DEFAULT 24 NOT NULL,
+    acepta_promociones        INT          DEFAULT 1 NOT NULL,
+    CONSTRAINT pk_perfilcliente      PRIMARY KEY (id_cliente),
     CONSTRAINT ck_perfil_idioma      CHECK (idioma IN ('es', 'en', 'fr')),
     CONSTRAINT ck_perfil_canal       CHECK (canal_preferido IN ('correo', 'SMS', 'WhatsApp')),
     CONSTRAINT ck_perfil_anticip     CHECK (anticipacion_recordatorio > 0),
@@ -145,12 +153,13 @@ CREATE TABLE PerfilCliente (
 -- 9. Tabla UsuarioSistema: cuentas de administradores, encargados y operadores.
 --    id_prestador admite NULL para el administrador general (ON DELETE SET NULL).
 CREATE TABLE UsuarioSistema (
-    id_usuario      INT     CONSTRAINT pk_usuariosistema PRIMARY KEY,
-    id_rol          INT     NOT NULL,
+    id_usuario      INT          NOT NULL,
+    id_rol          INT          NOT NULL,
     id_prestador    INT,
     nombre_usuario  VARCHAR(50)  NOT NULL,
     contrasena_hash VARCHAR(255) NOT NULL,
     estado          VARCHAR(15)  DEFAULT 'activo' NOT NULL,
+    CONSTRAINT pk_usuariosistema    PRIMARY KEY (id_usuario),
     CONSTRAINT uq_usuario_login     UNIQUE (nombre_usuario),
     CONSTRAINT ck_usuario_estado    CHECK (estado IN ('activo', 'inactivo')),
     CONSTRAINT fk_usuario_rol       FOREIGN KEY (id_rol) REFERENCES Rol (id_rol),
@@ -159,15 +168,16 @@ CREATE TABLE UsuarioSistema (
 
 -- 10. Tabla Plan: planes gastronomicos y de degustacion ofrecidos por cada prestador.
 CREATE TABLE Plan (
-    id_plan               INT     CONSTRAINT pk_plan PRIMARY KEY,
-    id_prestador          INT     NOT NULL,
-    nombre                VARCHAR(120) NOT NULL,
-    descripcion           VARCHAR(400) NOT NULL,
-    tipo                  VARCHAR(40)  NOT NULL,
-    precio                DECIMAL(10,2)  NOT NULL,
+    id_plan               INT           NOT NULL,
+    id_prestador          INT           NOT NULL,
+    nombre                VARCHAR(120)  NOT NULL,
+    descripcion           VARCHAR(400)  NOT NULL,
+    tipo                  VARCHAR(40)   NOT NULL,
+    precio                DECIMAL(10,2) NOT NULL,
     fecha_inicio_vigencia DATE          NOT NULL,
     fecha_fin_vigencia    DATE          NOT NULL,
-    estado                VARCHAR(15)  DEFAULT 'activo' NOT NULL,
+    estado                VARCHAR(15)   DEFAULT 'activo' NOT NULL,
+    CONSTRAINT pk_plan                  PRIMARY KEY (id_plan),
     CONSTRAINT uq_plan_prestador_nombre UNIQUE (id_prestador, nombre),
     CONSTRAINT ck_plan_tipo             CHECK (tipo IN ('gastronomico', 'degustacion', 'evento')),
     CONSTRAINT ck_plan_precio           CHECK (precio > 0),
@@ -179,12 +189,13 @@ CREATE TABLE Plan (
 -- 11. Tabla Mesa: inventario de mesas fisicas de cada restaurante.
 --     Ninguna mesa individual supera 12 sillas; grupos de 14 juntan mesas en ReservaMesa.
 CREATE TABLE Mesa (
-    id_mesa      INT    CONSTRAINT pk_mesa PRIMARY KEY,
-    id_prestador INT    NOT NULL,
-    numero_mesa  INT    NOT NULL,
-    capacidad    INT    NOT NULL,
+    id_mesa      INT         NOT NULL,
+    id_prestador INT         NOT NULL,
+    numero_mesa  INT         NOT NULL,
+    capacidad    INT         NOT NULL,
     zona         VARCHAR(20) NOT NULL,
     estado       VARCHAR(20) DEFAULT 'disponible' NOT NULL,
+    CONSTRAINT pk_mesa               PRIMARY KEY (id_mesa),
     CONSTRAINT uq_mesa_prestador_num UNIQUE (id_prestador, numero_mesa),
     CONSTRAINT ck_mesa_capacidad     CHECK (capacidad BETWEEN 1 AND 12),
     CONSTRAINT ck_mesa_zona          CHECK (zona IN ('salon', 'terraza', 'mirador', 'barra')),
@@ -194,13 +205,14 @@ CREATE TABLE Mesa (
 
 -- 12. Tabla Plato: platos registrados en la carta de cada restaurante.
 CREATE TABLE Plato (
-    id_plato      INT     CONSTRAINT pk_plato PRIMARY KEY,
-    id_prestador  INT     NOT NULL,
-    id_categoria  INT     NOT NULL,
-    nombre_plato  VARCHAR(120) NOT NULL,
-    descripcion   VARCHAR(400) NOT NULL,
-    precio_actual DECIMAL(10,2)  NOT NULL,
-    estado        VARCHAR(15)  DEFAULT 'disponible' NOT NULL,
+    id_plato      INT           NOT NULL,
+    id_prestador  INT           NOT NULL,
+    id_categoria  INT           NOT NULL,
+    nombre_plato  VARCHAR(120)  NOT NULL,
+    descripcion   VARCHAR(400)  NOT NULL,
+    precio_actual DECIMAL(10,2) NOT NULL,
+    estado        VARCHAR(15)   DEFAULT 'disponible' NOT NULL,
+    CONSTRAINT pk_plato                  PRIMARY KEY (id_plato),
     CONSTRAINT uq_plato_prestador_nombre UNIQUE (id_prestador, nombre_plato),
     CONSTRAINT ck_plato_precio           CHECK (precio_actual > 0),
     CONSTRAINT ck_plato_estado           CHECK (estado IN ('disponible', 'agotado', 'inactivo')),
@@ -210,14 +222,15 @@ CREATE TABLE Plato (
 
 -- 13. Tabla Experiencia: catas de cafe, talleres de cocina y experiencias con cupo.
 CREATE TABLE Experiencia (
-    id_experiencia     INT     CONSTRAINT pk_experiencia PRIMARY KEY,
-    id_prestador       INT     NOT NULL,
-    nombre_experiencia VARCHAR(120) NOT NULL,
-    descripcion        VARCHAR(400) NOT NULL,
-    cupo_maximo        INT     NOT NULL,
-    precio_persona     DECIMAL(10,2)  NOT NULL,
-    duracion_horas     DECIMAL(4,2)   NOT NULL,
-    estado             VARCHAR(15)  DEFAULT 'activa' NOT NULL,
+    id_experiencia     INT           NOT NULL,
+    id_prestador       INT           NOT NULL,
+    nombre_experiencia VARCHAR(120)  NOT NULL,
+    descripcion        VARCHAR(400)  NOT NULL,
+    cupo_maximo        INT           NOT NULL,
+    precio_persona     DECIMAL(10,2) NOT NULL,
+    duracion_horas     DECIMAL(4,2)  NOT NULL,
+    estado             VARCHAR(15)   DEFAULT 'activa' NOT NULL,
+    CONSTRAINT pk_experiencia          PRIMARY KEY (id_experiencia),
     CONSTRAINT ck_experiencia_cupo     CHECK (cupo_maximo > 0),
     CONSTRAINT ck_experiencia_precio   CHECK (precio_persona > 0),
     CONSTRAINT ck_experiencia_duracion CHECK (duracion_horas > 0),
@@ -227,14 +240,15 @@ CREATE TABLE Experiencia (
 
 -- 14. Tabla Domiciliario: repartidores vinculados a los restaurantes.
 CREATE TABLE Domiciliario (
-    id_domiciliario INT    CONSTRAINT pk_domiciliario PRIMARY KEY,
-    id_prestador    INT    NOT NULL,
+    id_domiciliario INT         NOT NULL,
+    id_prestador    INT         NOT NULL,
     documento       VARCHAR(20) NOT NULL,
     nombres         VARCHAR(80) NOT NULL,
     apellidos       VARCHAR(80) NOT NULL,
     telefono        VARCHAR(20) NOT NULL,
     tipo_vehiculo   VARCHAR(20) NOT NULL,
     estado          VARCHAR(15) DEFAULT 'disponible' NOT NULL,
+    CONSTRAINT pk_domiciliario          PRIMARY KEY (id_domiciliario),
     CONSTRAINT uq_domiciliario_doc      UNIQUE (documento),
     CONSTRAINT ck_domiciliario_vehiculo CHECK (tipo_vehiculo IN ('motocicleta', 'bicicleta', 'automovil')),
     CONSTRAINT ck_domiciliario_estado   CHECK (estado IN ('disponible', 'en_ruta', 'inactivo')),
@@ -257,17 +271,18 @@ CREATE TABLE PlatoEtiqueta (
 -- 16. Tabla Reserva: reservas de mesas, planes gastronomicos o experiencias.
 --     Incluye id_experiencia* atendiendo la retroalimentacion de la Entrega 1.
 CREATE TABLE Reserva (
-    id_reserva        INT   CONSTRAINT pk_reserva PRIMARY KEY,
-    id_cliente        INT   NOT NULL,
+    id_reserva        INT           NOT NULL,
+    id_cliente        INT           NOT NULL,
     id_plan           INT,
     id_experiencia    INT,
-    fecha_creacion    DATE         DEFAULT (CURRENT_DATE) NOT NULL,
-    fecha_servicio    DATE         NOT NULL,
-    franja_horaria    VARCHAR(20) NOT NULL,
-    numero_comensales INT    NOT NULL,
+    fecha_creacion    DATE          DEFAULT (CURRENT_DATE) NOT NULL,
+    fecha_servicio    DATE          NOT NULL,
+    franja_horaria    VARCHAR(20)   NOT NULL,
+    numero_comensales INT           NOT NULL,
     valor_total       DECIMAL(12,2) NOT NULL,
-    canal             VARCHAR(20) NOT NULL,
-    estado            VARCHAR(15) DEFAULT 'pendiente' NOT NULL,
+    canal             VARCHAR(20)   NOT NULL,
+    estado            VARCHAR(15)   DEFAULT 'pendiente' NOT NULL,
+    CONSTRAINT pk_reserva            PRIMARY KEY (id_reserva),
     CONSTRAINT ck_reserva_franja     CHECK (franja_horaria IN ('desayuno', 'almuerzo', 'cena')),
     CONSTRAINT ck_reserva_comensales CHECK (numero_comensales > 0),
     CONSTRAINT ck_reserva_valor      CHECK (valor_total >= 0),
@@ -286,7 +301,7 @@ CREATE TABLE Reserva (
 --     grupos grandes (ej. 14 personas juntando mesas de 8 y 6 puestos).
 CREATE TABLE ReservaMesa (
     id_reserva INT NOT NULL,
-    id_mesa    INT  NOT NULL,
+    id_mesa    INT NOT NULL,
     CONSTRAINT pk_reservamesa     PRIMARY KEY (id_reserva, id_mesa),
     CONSTRAINT fk_resmesa_reserva FOREIGN KEY (id_reserva) REFERENCES Reserva (id_reserva) ON DELETE CASCADE,
     CONSTRAINT fk_resmesa_mesa    FOREIGN KEY (id_mesa) REFERENCES Mesa (id_mesa)
@@ -294,13 +309,14 @@ CREATE TABLE ReservaMesa (
 
 -- 18. Tabla Pago: abonos y pagos totales asociados a una reserva (sin id_cliente para cumplir 3FN).
 CREATE TABLE Pago (
-    id_pago                INT   CONSTRAINT pk_pago PRIMARY KEY,
-    id_reserva             INT   NOT NULL,
-    fecha_pago             DATE         DEFAULT (CURRENT_DATE) NOT NULL,
+    id_pago                INT           NOT NULL,
+    id_reserva             INT           NOT NULL,
+    fecha_pago             DATE          DEFAULT (CURRENT_DATE) NOT NULL,
     monto                  DECIMAL(12,2) NOT NULL,
-    metodo                 VARCHAR(25) NOT NULL,
-    estado                 VARCHAR(20) DEFAULT 'aprobado' NOT NULL,
+    metodo                 VARCHAR(25)   NOT NULL,
+    estado                 VARCHAR(20)   DEFAULT 'aprobado' NOT NULL,
     referencia_transaccion VARCHAR(60),
+    CONSTRAINT pk_pago            PRIMARY KEY (id_pago),
     CONSTRAINT uq_pago_referencia UNIQUE (referencia_transaccion),
     CONSTRAINT ck_pago_monto      CHECK (monto > 0),
     CONSTRAINT ck_pago_metodo     CHECK (metodo IN ('efectivo', 'tarjeta', 'transferencia', 'PSE')),
@@ -311,15 +327,16 @@ CREATE TABLE Pago (
 -- 19. Tabla Notificacion: historial de avisos y promociones enviados al cliente.
 --     fk_notif_cliente usa RESTRICT (sin ON DELETE CASCADE) para conservar el historial.
 CREATE TABLE Notificacion (
-    id_notificacion  INT    CONSTRAINT pk_notificacion PRIMARY KEY,
-    id_cliente       INT    NOT NULL,
+    id_notificacion  INT          NOT NULL,
+    id_cliente       INT          NOT NULL,
     id_reserva       INT,
     tipo             VARCHAR(25)  NOT NULL,
     canal            VARCHAR(15)  NOT NULL,
     mensaje          VARCHAR(400) NOT NULL,
-    fecha_programada DATE          NOT NULL,
+    fecha_programada DATE         NOT NULL,
     fecha_real       DATE,
     estado           VARCHAR(15)  DEFAULT 'pendiente' NOT NULL,
+    CONSTRAINT pk_notificacion  PRIMARY KEY (id_notificacion),
     CONSTRAINT ck_notif_tipo    CHECK (tipo IN ('confirmacion', 'recordatorio', 'cancelacion', 'promocion')),
     CONSTRAINT ck_notif_canal   CHECK (canal IN ('correo', 'SMS', 'WhatsApp')),
     CONSTRAINT ck_notif_estado  CHECK (estado IN ('pendiente', 'enviada', 'fallida')),
@@ -331,18 +348,19 @@ CREATE TABLE Notificacion (
 -- 20. Tabla Pedido: cabecera de comandas en mesa, para llevar o a domicilio.
 --     Incluye CHECK compuesto para validar que un domicilio tenga direccion y un pedido en mesa tenga mesa.
 CREATE TABLE Pedido (
-    id_pedido         INT    CONSTRAINT pk_pedido PRIMARY KEY,
-    id_prestador      INT     NOT NULL,
+    id_pedido         INT           NOT NULL,
+    id_prestador      INT           NOT NULL,
     id_cliente        INT,
     id_reserva        INT,
     id_mesa           INT,
     id_domiciliario   INT,
     fecha_hora        DATE          DEFAULT (CURRENT_DATE) NOT NULL,
-    tipo_pedido       VARCHAR(15)  NOT NULL,
+    tipo_pedido       VARCHAR(15)   NOT NULL,
     direccion_entrega VARCHAR(180),
-    costo_envio       DECIMAL(10,2)  DEFAULT 0 NOT NULL,
-    total_pedido      DECIMAL(12,2)  NOT NULL,
-    estado_pedido     VARCHAR(20)  DEFAULT 'recibido' NOT NULL,
+    costo_envio       DECIMAL(10,2) DEFAULT 0 NOT NULL,
+    total_pedido      DECIMAL(12,2) NOT NULL,
+    estado_pedido     VARCHAR(20)   DEFAULT 'recibido' NOT NULL,
+    CONSTRAINT pk_pedido           PRIMARY KEY (id_pedido),
     CONSTRAINT ck_pedido_tipo      CHECK (tipo_pedido IN ('en_mesa', 'para_llevar', 'domicilio')),
     CONSTRAINT ck_pedido_envio     CHECK (costo_envio >= 0),
     CONSTRAINT ck_pedido_total     CHECK (total_pedido > 0),
