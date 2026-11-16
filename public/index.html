@@ -618,21 +618,20 @@
     </div>
   </div>
 
-  <!-- TAB 6: CONSULTAS SQL -->
+  <!-- TAB 6: CONSULTAS SQL PREDEFINIDAS -->
   <div id="tabSql" class="tab-pane-custom d-none">
     <div class="card p-4">
-      <div class="section-title mb-1">Consultas SQL</div>
-      <p class="text-muted small mb-3">Ejecuta consultas de solo lectura (`SELECT`) directamente sobre las vistas de la base de datos.</p>
-      <div class="d-flex flex-wrap gap-2 mb-3">
-        <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(1)">Reservas con varias mesas</button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(2)">Comparación precios (Pedido 901)</button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(3)">Detalle de reservas</button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(4)">Clientes sobre el promedio</button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="cargarPresetSql(5)">Ingresos por restaurante</button>
+      <div class="section-title mb-1">Consultas SQL sobre vistas</div>
+      <p class="text-muted small mb-3">Selecciona una consulta predefinida para visualizar los datos en tiempo real desde las vistas del sistema.</p>
+      <div class="d-flex flex-wrap gap-2 mb-3" id="sqlPresetsBox">
+        <button class="btn btn-outline-secondary btn-sm" data-preset="1" onclick="cargarPresetSql(1)">Reservas con varias mesas</button>
+        <button class="btn btn-outline-secondary btn-sm" data-preset="2" onclick="cargarPresetSql(2)">Comparación precios (Pedido 901)</button>
+        <button class="btn btn-outline-secondary btn-sm" data-preset="3" onclick="cargarPresetSql(3)">Detalle de reservas</button>
+        <button class="btn btn-outline-secondary btn-sm" data-preset="4" onclick="cargarPresetSql(4)">Clientes sobre el promedio</button>
+        <button class="btn btn-outline-secondary btn-sm" data-preset="5" onclick="cargarPresetSql(5)">Ingresos por restaurante</button>
       </div>
-      <textarea class="form-control font-monospace small mb-3" id="txtSqlLibre" rows="4">SELECT * FROM vw_Defensa_PrecioHistorico WHERE id_pedido = 901;</textarea>
-      <button class="btn btn-qs btn-sm mb-3 px-4" style="width:fit-content;" onclick="ejecutarSqlLibre()">Ejecutar consulta</button>
-      <div class="table-responsive" style="max-height:360px;overflow:auto;">
+      <div class="sql-box mb-3" id="sqlPreview"></div>
+      <div class="table-responsive" style="max-height:380px;overflow:auto;">
         <table class="table table-hover mb-0">
           <thead id="sqlThead"></thead>
           <tbody id="sqlTbody"></tbody>
@@ -752,6 +751,7 @@ function cambiarTab(id, btn) {
   if (id === 'tabCrud') cargarTablaCrud(tablaActual);
   if (id === 'tabReportes') cargarReporte(reporteActual);
   if (id === 'tabPerfilNotif') { cargarPerfil(); cargarNotificaciones(); }
+  if (id === 'tabSql') cargarPresetSql(2);
 }
 
 function abrirModalLogin() { modalLoginBs.show(); }
@@ -1196,7 +1196,7 @@ function descargarPlantilla(tipo, inputId) {
   window.open(`/api/plantilla/pdf?tipo=${tipo}&id=${id}`, '_blank');
 }
 
-function cargarPresetSql(n) {
+async function cargarPresetSql(n) {
   const presets = {
     1: "SELECT * FROM vw_Defensa_GruposGrandes ORDER BY numero_comensales DESC;",
     2: "SELECT * FROM vw_Defensa_PrecioHistorico WHERE id_pedido = 901;",
@@ -1204,13 +1204,13 @@ function cargarPresetSql(n) {
     4: "SELECT cliente, total_pagado FROM vw_TotalPagadoCliente WHERE total_pagado > (SELECT AVG(total_pagado) FROM vw_TotalPagadoCliente) ORDER BY total_pagado DESC;",
     5: "SELECT * FROM vw_IngresosPrestador ORDER BY total_ingresos DESC;"
   };
-  document.getElementById('txtSqlLibre').value = presets[n];
-  ejecutarSqlLibre();
-}
-
-async function ejecutarSqlLibre() {
+  const sql = presets[n] || presets[2];
+  document.getElementById('sqlPreview').textContent = sql;
+  document.querySelectorAll('#sqlPresetsBox button').forEach(b => {
+    const active = Number(b.dataset.preset) === n;
+    b.className = active ? 'btn btn-qs btn-sm' : 'btn btn-outline-secondary btn-sm';
+  });
   try {
-    const sql = document.getElementById('txtSqlLibre').value;
     const res = await api('/api/sql', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({sql}) });
     renderTabla('sqlThead', 'sqlTbody', res.columnas, res.filas);
   } catch (e) { mostrarAlerta(e.message, 'danger'); }
